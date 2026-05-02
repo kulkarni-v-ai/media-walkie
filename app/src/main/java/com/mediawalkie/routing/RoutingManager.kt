@@ -81,7 +81,7 @@ class RoutingManager(private val context: Context) {
         }
     }
 
-    fun start(frequency: String) {
+    fun start(frequency: String, userId: String? = null) {
         activeFrequency = frequency
         audioEngine.startPlayback() // Always listen
         
@@ -94,7 +94,7 @@ class RoutingManager(private val context: Context) {
         if (isInternetAvailable) {
             webRTCEngine.initialize()
             // Connect to local or remote Node.js signaling server
-            webRTCEngine.connectToSignalingServer("https://media-walkie-signaling.onrender.com", frequency)
+            webRTCEngine.connectToSignalingServer("https://media-walkie-signaling.onrender.com", frequency, userId)
         }
     }
 

@@ -71,10 +71,11 @@ class MainActivity : ComponentActivity() {
                         LaunchedEffect(multiplePermissionsState.allPermissionsGranted) {
                             if (multiplePermissionsState.allPermissionsGranted) {
                                 // Default frequency on startup
-                                routingManager.start("104.5")
+                                routingManager.start("104.5", userId)
                                 
                                 val serviceIntent = Intent(this@MainActivity, WalkieService::class.java)
                                 serviceIntent.putExtra("FREQUENCY", "104.5")
+                                serviceIntent.putExtra("USER_ID", userId)
                                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                                     startForegroundService(serviceIntent)
                                 } else {

@@ -161,27 +161,44 @@ io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
   // When a user tunes to a frequency
-  socket.on('join_frequency', (frequency) => {
-    // Leave previous frequency room if any
-    if (socket.frequency) {
-      socket.leave(socket.frequency);
-      if (frequencyRooms[socket.frequency]) {
-        frequencyRooms[socket.frequency] = frequencyRooms[socket.frequency].filter(id => id !== socket.id);
-      }
-    }
+  socket.on('join_frequency', async (data) => {
+    try {
+        const { frequency, userId } = typeof data === 'string' ? { frequency: data, userId: null } : data;
+        
+        // Leave previous frequency room
+        if (socket.frequency) {
+          socket.leave(socket.frequency);
+          if (frequencyRooms[socket.frequency]) {
+            frequencyRooms[socket.frequency] = frequencyRooms[socket.frequency].filter(id => id !== socket.id);
+          }
+        }
 
-    socket.join(frequency);
-    socket.frequency = frequency; // store frequency on socket instance
-    
-    if (!frequencyRooms[frequency]) {
-      frequencyRooms[frequency] = [];
-    }
-    frequencyRooms[frequency].push(socket.id);
+        // Access Control: Verify if user is allowed to join this frequency
+        if (userId) {
+            const user = await User.findById(userId).populate('assignedGroups');
+            if (user && !user.isAdmin) {
+                const hasAccess = user.assignedGroups.some(g => g.frequency === frequency);
+                if (!hasAccess) {
+                    console.log(`Access Denied: User ${userId} tried to join frequency ${frequency}`);
+                    socket.emit('error', 'You do not have access to this channel.');
+                    return;
+                }
+            }
+        }
 
-    console.log(`User ${socket.id} joined frequency ${frequency}`);
-    
-    // Notify others in the frequency that a new peer joined
-    socket.to(frequency).emit('peer_joined', socket.id);
+        socket.join(frequency);
+        socket.frequency = frequency;
+        
+        if (!frequencyRooms[frequency]) {
+          frequencyRooms[frequency] = [];
+        }
+        frequencyRooms[frequency].push(socket.id);
+
+        console.log(`User ${socket.id} (User: ${userId}) joined frequency ${frequency}`);
+        socket.to(frequency).emit('peer_joined', socket.id);
+    } catch (err) {
+        console.error("Socket join error:", err);
+    }
   });
 
   // WebRTC Signaling: Offer

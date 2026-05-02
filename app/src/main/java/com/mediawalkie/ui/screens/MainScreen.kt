@@ -177,7 +177,7 @@ fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unkno
                             item {
                                 TextButton(onClick = { 
                                     frequency = "104.5"
-                                    routingManager?.start(frequency)
+                                    routingManager?.start(frequency, userId)
                                     showGroupsDialog = false
                                 }) { Text("Default (104.5 MHz)") }
                             }
@@ -193,7 +193,7 @@ fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unkno
                             items(groups) { group ->
                                 TextButton(onClick = { 
                                     frequency = group.frequency
-                                    routingManager?.start(frequency)
+                                    routingManager?.start(frequency, userId)
                                     showGroupsDialog = false
                                 }) {
                                     Text("${group.name} (${group.frequency} MHz)")

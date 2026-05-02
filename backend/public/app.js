@@ -222,7 +222,10 @@ pttButton.addEventListener('touchend', stopCapture);
 function changeFreq(freq) {
     currentFreq = freq;
     frequencyEl.innerText = freq;
-    socket.emit('join_frequency', freq);
+    socket.emit('join_frequency', { 
+        frequency: freq, 
+        userId: currentUser ? currentUser._id : null 
+    });
 }
 
 function promptFreq() {

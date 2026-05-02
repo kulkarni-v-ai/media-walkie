@@ -17,7 +17,7 @@ class WebRTCEngine(private val context: Context) {
         Log.d("WebRTCEngine", "Engine Initialized")
     }
 
-    fun connectToSignalingServer(url: String, frequency: String) {
+    fun connectToSignalingServer(url: String, frequency: String, userId: String? = null) {
         currentFrequency = frequency
         try {
             val opts = IO.Options()
@@ -28,7 +28,10 @@ class WebRTCEngine(private val context: Context) {
             
             socket?.on(Socket.EVENT_CONNECT) {
                 Log.d("WebRTCEngine", "Connected to Signaling Server! Joining freq: $frequency")
-                socket?.emit("join_frequency", frequency)
+                val joinData = JSONObject()
+                joinData.put("frequency", frequency)
+                joinData.put("userId", userId)
+                socket?.emit("join_frequency", joinData)
             }
 
             // Receive audio from the global room
