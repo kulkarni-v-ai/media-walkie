@@ -97,25 +97,81 @@ fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unkno
         }
 
         if (showGroupsDialog) {
+            var showAddDialog by remember { mutableStateOf(false) }
+            var newName by remember { mutableStateOf("") }
+            var newFreq by remember { mutableStateOf("") }
+
             AlertDialog(
                 onDismissRequest = { showGroupsDialog = false },
-                title = { Text("Select Group") },
-                text = {
-                    LazyColumn {
-                        item {
-                            TextButton(onClick = { 
-                                frequency = "104.5"
-                                routingManager?.start(frequency)
-                                showGroupsDialog = false
-                            }) { Text("Default (104.5 MHz)") }
+                title = { 
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Select Channel")
+                        Spacer(Modifier.weight(1f))
+                        TextButton(onClick = { showAddDialog = true }) {
+                            Icon(Icons.Default.Add, "Add")
+                            Text("New")
                         }
-                        items(groups) { group ->
-                            TextButton(onClick = { 
-                                frequency = group.frequency
-                                routingManager?.start(frequency)
-                                showGroupsDialog = false
-                            }) {
-                                Text("${group.name} (${group.frequency} MHz)")
+                    }
+                },
+                text = {
+                    Column {
+                        if (showAddDialog) {
+                            Column(Modifier.padding(bottom = 16.dp)) {
+                                androidx.compose.material3.OutlinedTextField(
+                                    value = newName,
+                                    onValueChange = { newName = it },
+                                    label = { Text("Channel Name") },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                androidx.compose.material3.OutlinedTextField(
+                                    value = newFreq,
+                                    onValueChange = { newFreq = it },
+                                    label = { Text("Frequency (MHz)") },
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                                )
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                    TextButton(onClick = { showAddDialog = false }) { Text("Cancel") }
+                                    TextButton(onClick = {
+                                        if (newName.isNotBlank() && newFreq.isNotBlank()) {
+                                            scope.launch {
+                                                try {
+                                                    api?.createGroup(GroupRequest(newName, newFreq))
+                                                    groups = api?.getGroups() ?: emptyList()
+                                                    showAddDialog = false
+                                                } catch (e: Exception) {}
+                                            }
+                                        }
+                                    }) { Text("Create") }
+                                }
+                                androidx.compose.material3.HorizontalDivider(Modifier.padding(vertical = 16.dp))
+                            }
+                        }
+
+                        LazyColumn {
+                            item {
+                                TextButton(onClick = { 
+                                    frequency = "104.5"
+                                    routingManager?.start(frequency)
+                                    showGroupsDialog = false
+                                }) { Text("Default (104.5 MHz)") }
+                            }
+                            item {
+                                TextButton(onClick = { 
+                                    frequency = "None"
+                                    routingManager?.stop()
+                                    showGroupsDialog = false
+                                }) { 
+                                    Text("None (Muted)", color = Color.Red) 
+                                }
+                            }
+                            items(groups) { group ->
+                                TextButton(onClick = { 
+                                    frequency = group.frequency
+                                    routingManager?.start(frequency)
+                                    showGroupsDialog = false
+                                }) {
+                                    Text("${group.name} (${group.frequency} MHz)")
+                                }
                             }
                         }
                     }

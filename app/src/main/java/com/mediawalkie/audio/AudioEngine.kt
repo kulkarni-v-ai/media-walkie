@@ -13,9 +13,13 @@ import android.content.Context
 
 class AudioEngine(private val context: Context) {
 
+    private val deviceId = java.util.UUID.randomUUID().toString().substring(0, 4)
+    private var sequenceNumber = 0L
+    private val processedPacketIds = mutableSetOf<String>()
+
     companion object {
         private const val TAG = "AudioEngine"
-        private const val SAMPLE_RATE = 8000 // 8kHz for minimum bandwidth usage
+        private const val SAMPLE_RATE = 16000 // Revert to 16kHz for better hardware compatibility
         private const val CHANNEL_CONFIG_IN = AudioFormat.CHANNEL_IN_MONO
         private const val CHANNEL_CONFIG_OUT = AudioFormat.CHANNEL_OUT_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
@@ -38,20 +42,17 @@ class AudioEngine(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun startCapture() {
         if (isRecording) return
+        Log.d(TAG, "Starting capture")
 
         try {
+            val minBufferSizeIn = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG_IN, AUDIO_FORMAT)
             audioRecord = AudioRecord(
                 MediaRecorder.AudioSource.MIC,
                 SAMPLE_RATE,
                 CHANNEL_CONFIG_IN,
                 AUDIO_FORMAT,
-                minBufferSizeIn
+                minBufferSizeIn * 2
             )
-
-            if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                Log.e(TAG, "AudioRecord initialization failed")
-                return
-            }
 
             audioRecord?.startRecording()
             isRecording = true
@@ -59,22 +60,28 @@ class AudioEngine(private val context: Context) {
             Thread {
                 val buffer = ByteArray(minBufferSizeIn)
                 val chunkBuffer = java.io.ByteArrayOutputStream()
-                val TARGET_CHUNK_SIZE = 1600 // 50ms of audio - much lower latency
+                val TARGET_CHUNK_SIZE = 3200 // 100ms at 16kHz
 
                 while (isRecording) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                     if (read > 0) {
                         chunkBuffer.write(buffer, 0, read)
                         if (chunkBuffer.size() >= TARGET_CHUNK_SIZE) {
-                            val data = chunkBuffer.toByteArray()
-                            Log.d(TAG, "Captured chunk: ${data.size} bytes")
-                            onAudioDataCaptured?.invoke(data)
+                            val audioData = chunkBuffer.toByteArray()
+                            
+                            // Add Deduplication Header: [DeviceID(4b)][Seq(8b)][Data...]
+                            val packet = java.io.ByteArrayOutputStream()
+                            packet.write(deviceId.toByteArray())
+                            val seqBytes = java.nio.ByteBuffer.allocate(8).putLong(sequenceNumber++).array()
+                            packet.write(seqBytes)
+                            packet.write(audioData)
+                            
+                            val finalPayload = packet.toByteArray()
+                            Log.d(TAG, "Captured chunk: ${finalPayload.size} bytes (Seq: $sequenceNumber)")
+                            onAudioDataCaptured?.invoke(finalPayload)
                             chunkBuffer.reset()
                         }
                     }
-                }
-                if (chunkBuffer.size() > 0) {
-                    onAudioDataCaptured?.invoke(chunkBuffer.toByteArray())
                 }
             }.start()
 
@@ -160,14 +167,31 @@ class AudioEngine(private val context: Context) {
         jitterBuffer.clear()
     }
 
-    fun queueAudioForPlayback(data: ByteArray) {
-        if (isPlaying) {
-            Log.d(TAG, "Queuing ${data.size} bytes for playback. Jitter buffer: ${jitterBuffer.size}")
-            jitterBuffer.offer(data)
-            // Jitter buffer: keep only the most recent 300ms to keep latency low
-            if (jitterBuffer.size > 6) {
-                jitterBuffer.poll() 
-            }
+    fun queueAudioForPlayback(payload: ByteArray) {
+        if (!isPlaying) return
+
+        try {
+            // Extract Header: [DeviceID(4b)][Seq(8b)]
+            if (payload.size < 12) return
+            val senderId = String(payload.copyOfRange(0, 4))
+            val seq = java.nio.ByteBuffer.wrap(payload.copyOfRange(4, 12)).long
+            val packetId = "$senderId-$seq"
+
+            // 1. Deduplication: Don't play (or relay) the same packet twice
+            if (processedPacketIds.contains(packetId)) return
+            processedPacketIds.add(packetId)
+            if (processedPacketIds.size > 100) processedPacketIds.remove(processedPacketIds.first())
+
+            // 2. Self-Mute: Don't play our own forwarded audio
+            if (senderId == deviceId) return
+
+            val audioData = payload.copyOfRange(12, payload.size)
+            Log.d(TAG, "Queuing packet $packetId for playback")
+            
+            jitterBuffer.offer(audioData)
+            if (jitterBuffer.size > 6) jitterBuffer.poll()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error processing incoming packet", e)
         }
     }
 }
