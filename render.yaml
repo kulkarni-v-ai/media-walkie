@@ -2,6 +2,7 @@ services:
   - type: web
     name: media-walkie-signaling
     env: node
+    rootDir: backend
     plan: free
     buildCommand: npm install
     startCommand: npm start
