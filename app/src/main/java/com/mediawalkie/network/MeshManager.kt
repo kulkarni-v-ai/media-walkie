@@ -62,10 +62,19 @@ class MeshManager(private val context: Context) {
         }
     }
 
+    private var activeFrequency: String = ""
+
     private val endpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-            Log.d("MeshManager", "Endpoint found: $endpointId. Requesting connection...")
-            connectionsClient.requestConnection("Device", endpointId, connectionLifecycleCallback)
+            Log.d("MeshManager", "Endpoint found: $endpointId (${info.endpointName})...")
+            
+            // Only connect if they are on the same frequency
+            if (info.endpointName.startsWith("Walkie-") && info.endpointName.contains(activeFrequency)) {
+                Log.d("MeshManager", "Frequency match! Requesting connection to $endpointId")
+                connectionsClient.requestConnection("Walkie-$activeFrequency", endpointId, connectionLifecycleCallback)
+            } else {
+                Log.d("MeshManager", "Frequency mismatch. Ignoring.")
+            }
         }
 
         override fun onEndpointLost(endpointId: String) {
@@ -74,29 +83,31 @@ class MeshManager(private val context: Context) {
     }
 
     fun startAdvertising(frequency: String) {
+        activeFrequency = frequency
         connectionsClient.stopAdvertising()
         val options = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
         connectionsClient.startAdvertising(
-            "Device",
-            "$SERVICE_ID-$frequency",
+            "Walkie-$frequency",
+            SERVICE_ID,
             connectionLifecycleCallback,
             options
         ).addOnSuccessListener {
-            Log.d("MeshManager", "Started advertising on freq $frequency")
+            Log.d("MeshManager", "Started advertising Walkie-$frequency on $SERVICE_ID")
         }.addOnFailureListener {
             Log.e("MeshManager", "Failed to start advertising", it)
         }
     }
 
     fun startDiscovery(frequency: String) {
+        activeFrequency = frequency
         connectionsClient.stopDiscovery()
         val options = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
         connectionsClient.startDiscovery(
-            "$SERVICE_ID-$frequency",
+            SERVICE_ID,
             endpointDiscoveryCallback,
             options
         ).addOnSuccessListener {
-            Log.d("MeshManager", "Started discovery on freq $frequency")
+            Log.d("MeshManager", "Started discovery on $SERVICE_ID")
         }.addOnFailureListener {
             Log.e("MeshManager", "Failed to start discovery", it)
         }
@@ -111,8 +122,12 @@ class MeshManager(private val context: Context) {
     }
 
     fun sendAudio(payloadData: ByteArray) {
-        if (connectedEndpoints.isEmpty()) return
+        if (connectedEndpoints.isEmpty()) {
+            Log.w("MeshManager", "No peers connected. Cannot send audio.")
+            return
+        }
         val payload = Payload.fromBytes(payloadData)
         connectionsClient.sendPayload(connectedEndpoints.toList(), payload)
+            .addOnFailureListener { Log.e("MeshManager", "Failed to send payload", it) }
     }
 }

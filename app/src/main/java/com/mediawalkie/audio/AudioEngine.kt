@@ -66,7 +66,9 @@ class AudioEngine(private val context: Context) {
                     if (read > 0) {
                         chunkBuffer.write(buffer, 0, read)
                         if (chunkBuffer.size() >= TARGET_CHUNK_SIZE) {
-                            onAudioDataCaptured?.invoke(chunkBuffer.toByteArray())
+                            val data = chunkBuffer.toByteArray()
+                            Log.d(TAG, "Captured chunk: ${data.size} bytes")
+                            onAudioDataCaptured?.invoke(data)
                             chunkBuffer.reset()
                         }
                     }
@@ -82,6 +84,7 @@ class AudioEngine(private val context: Context) {
     }
 
     fun stopCapture() {
+        Log.d(TAG, "Stopping capture")
         isRecording = false
         audioRecord?.stop()
         audioRecord?.release()
@@ -90,6 +93,7 @@ class AudioEngine(private val context: Context) {
 
     fun startPlayback() {
         if (isPlaying) return
+        Log.d(TAG, "Starting playback")
 
         try {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -148,6 +152,7 @@ class AudioEngine(private val context: Context) {
     }
 
     fun stopPlayback() {
+        Log.d(TAG, "Stopping playback")
         isPlaying = false
         audioTrack?.stop()
         audioTrack?.release()
@@ -157,6 +162,7 @@ class AudioEngine(private val context: Context) {
 
     fun queueAudioForPlayback(data: ByteArray) {
         if (isPlaying) {
+            Log.d(TAG, "Queuing ${data.size} bytes for playback. Jitter buffer: ${jitterBuffer.size}")
             jitterBuffer.offer(data)
             // Jitter buffer: keep only the most recent 300ms to keep latency low
             if (jitterBuffer.size > 6) {

@@ -2,6 +2,7 @@ package com.mediawalkie.routing
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.*
 import com.mediawalkie.audio.AudioEngine
 import com.mediawalkie.network.MeshManager
 import com.mediawalkie.network.WebRTCEngine
@@ -16,7 +17,8 @@ class RoutingManager(private val context: Context) {
 
     private var activeFrequency: String = "104.5"
     private var isInternetAvailable = false
-    private var connectedMeshPeers = 0
+    var connectedMeshPeers by mutableStateOf(0)
+        private set
     private var isPttActive = false
 
     init {

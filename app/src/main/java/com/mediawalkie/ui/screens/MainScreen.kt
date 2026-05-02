@@ -154,11 +154,13 @@ fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unkno
         }
 
         // Network Status
+        val peerCount = routingManager?.connectedMeshPeers ?: 0
         Text(
-            text = "STATUS: SCANNING (OFFLINE MESH)",
-            color = Color.Gray,
+            text = if (peerCount > 0) "STATUS: CONNECTED ($peerCount OFFLINE PEERS)" else "STATUS: SCANNING (OFFLINE MESH)",
+            color = if (peerCount > 0) Color(0xFF4CAF50) else Color.Gray,
             fontSize = 12.sp,
-            letterSpacing = 1.sp
+            letterSpacing = 1.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
