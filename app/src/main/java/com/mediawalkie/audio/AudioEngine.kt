@@ -59,7 +59,7 @@ class AudioEngine(private val context: Context) {
             Thread {
                 val buffer = ByteArray(minBufferSizeIn)
                 val chunkBuffer = java.io.ByteArrayOutputStream()
-                val TARGET_CHUNK_SIZE = 3200 // 100ms of audio at 16kHz
+                val TARGET_CHUNK_SIZE = 1600 // 50ms of audio - much lower latency
 
                 while (isRecording) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
@@ -107,7 +107,8 @@ class AudioEngine(private val context: Context) {
                 Log.w(TAG, "Could not adjust volume: ${volEx.message}")
             }
 
-            val trackBufferSize = Math.max(minBufferSizeOut * 8, 16384)
+            // Small buffer for low latency
+            val trackBufferSize = Math.max(minBufferSizeOut * 2, 4096)
 
             audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(
@@ -136,7 +137,8 @@ class AudioEngine(private val context: Context) {
                     if (buffer != null) {
                         audioTrack?.write(buffer, 0, buffer.size)
                     } else {
-                        Thread.sleep(10)
+                        // Very short sleep to stay responsive
+                        Thread.sleep(5)
                     }
                 }
             }.start()
@@ -156,9 +158,8 @@ class AudioEngine(private val context: Context) {
     fun queueAudioForPlayback(data: ByteArray) {
         if (isPlaying) {
             jitterBuffer.offer(data)
-            // Jitter buffer: wait for at least 2 packets before starting to play to smooth out "cut cut"
-            // but keep it small enough to avoid massive delay
-            if (jitterBuffer.size > 10) {
+            // Jitter buffer: keep only the most recent 300ms to keep latency low
+            if (jitterBuffer.size > 6) {
                 jitterBuffer.poll() 
             }
         }

@@ -25,6 +25,12 @@ class RoutingManager(private val context: Context) {
             if (!isPttActive) {
                 Log.d(TAG, "Received payload from Mesh. Playing...")
                 audioEngine.queueAudioForPlayback(payload)
+                
+                // GATEWAY LOGIC: Forward mesh audio to the global internet (WebRTC)
+                if (isInternetAvailable) {
+                    Log.d(TAG, "Acting as Gateway: Forwarding Mesh -> WebRTC")
+                    webRTCEngine.sendAudioData(payload)
+                }
             }
         }
 
@@ -38,6 +44,12 @@ class RoutingManager(private val context: Context) {
             if (!isPttActive) {
                 Log.d(TAG, "Received payload from WebRTC. Playing...")
                 audioEngine.queueAudioForPlayback(payload)
+                
+                // GATEWAY LOGIC: Forward global audio to the local mesh
+                if (connectedMeshPeers > 0) {
+                    Log.d(TAG, "Acting as Gateway: Forwarding WebRTC -> Mesh")
+                    meshManager.sendAudio(payload)
+                }
             }
         }
 
