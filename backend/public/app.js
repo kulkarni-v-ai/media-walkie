@@ -6,6 +6,10 @@ const frequencyEl = document.getElementById('frequency');
 const speakerIndicator = document.getElementById('speaker-indicator');
 const speakerNameEl = document.getElementById('speaker-name');
 const usernameInput = document.getElementById('username');
+const emailInput = document.getElementById('user-email');
+const phoneInput = document.getElementById('user-phone');
+const registerBtn = document.getElementById('register-btn');
+const adminLink = document.getElementById('admin-link');
 
 let audioContext;
 let scriptProcessor;
@@ -14,9 +18,56 @@ let isRecording = false;
 let currentFreq = '104.5';
 let deviceId = Math.random().toString(36).substring(7).substring(0, 4);
 let seq = 0;
+let currentUser = null;
 
-// Set random username initially
-usernameInput.value = 'User_' + Math.floor(Math.random() * 999);
+// Auth Logic
+registerBtn.addEventListener('click', async () => {
+    const name = usernameInput.value;
+    const email = emailInput.value;
+    const phone = phoneInput.value;
+    const pin = prompt("Enter your PIN:");
+
+    if (!name || !pin) return alert("Name and PIN required");
+
+    try {
+        const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, pin, email, phone, deviceId })
+        });
+        
+        const loginRes = await fetch('/api/auth/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, pin })
+        });
+        const loginData = await loginRes.json();
+        
+        if (loginRes.ok) {
+            currentUser = loginData.user;
+            alert("Verified successfully!");
+            if (currentUser.isAdmin) adminLink.style.display = 'block';
+            loadGroups();
+        } else {
+            alert(loginData.error || "Verification Failed");
+        }
+    } catch (err) {
+        alert("Action Failed");
+    }
+});
+
+async function loadGroups() {
+    if (!currentUser) return;
+    try {
+        const res = await fetch(`/api/groups?userId=${currentUser._id}`);
+        const groups = await res.json();
+        if (groups.length > 0) {
+            changeFreq(groups[0].frequency);
+        }
+    } catch (err) {
+        console.error("Failed to load groups");
+    }
+}
 
 // Socket Handlers
 socket.on('connect', () => {

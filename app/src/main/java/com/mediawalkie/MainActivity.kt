@@ -41,6 +41,7 @@ class MainActivity : ComponentActivity() {
             MediaWalkieTheme {
                 val isVerified by sessionManager.isVerifiedFlow.collectAsState(initial = false)
                 val userName by sessionManager.userNameFlow.collectAsState(initial = "")
+                val userId by sessionManager.userIdFlow.collectAsState(initial = "")
                 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -84,7 +85,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        MainScreen(routingManager = routingManager, userName = userName ?: "Unknown", api = walkieApi)
+                        MainScreen(routingManager = routingManager, userName = userName ?: "Unknown", api = walkieApi, userId = userId ?: "")
                     }
                 }
             }

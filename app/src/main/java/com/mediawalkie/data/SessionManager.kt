@@ -14,10 +14,15 @@ class SessionManager(private val context: Context) {
     companion object {
         val USER_NAME = stringPreferencesKey("user_name")
         val IS_VERIFIED = booleanPreferencesKey("is_verified")
+        val USER_ID = stringPreferencesKey("user_id")
     }
 
     val userNameFlow: Flow<String?> = context.dataStore.data.map { preferences ->
         preferences[USER_NAME]
+    }
+
+    val userIdFlow: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[USER_ID]
     }
 
     val isVerifiedFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -28,6 +33,12 @@ class SessionManager(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[USER_NAME] = name
             preferences[IS_VERIFIED] = isVerified
+        }
+    }
+
+    suspend fun saveUserId(id: String) {
+        context.dataStore.edit { preferences ->
+            preferences[USER_ID] = id
         }
     }
 

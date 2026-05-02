@@ -7,13 +7,28 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 
 // Data classes for API requests/responses
-data class RegisterRequest(val name: String, val pin: String, val deviceId: String)
+data class RegisterRequest(
+    val name: String, 
+    val pin: String, 
+    val deviceId: String,
+    val email: String? = null,
+    val phone: String? = null
+)
 data class AuthResponse(val message: String?, val error: String?, val user: User?)
-data class User(val name: String, val pin: String, val deviceId: String, val isVerified: Boolean)
+data class User(
+    val _id: String,
+    val name: String, 
+    val pin: String, 
+    val deviceId: String, 
+    val isVerified: Boolean,
+    val isAdmin: Boolean = false,
+    val email: String? = null,
+    val phone: String? = null
+)
 
-data class GroupRequest(val name: String, val frequency: String)
+data class GroupRequest(val name: String, val frequency: String, val rangeDescription: String? = null)
 data class GroupResponse(val message: String?, val error: String?, val group: Group?)
-data class Group(val name: String, val frequency: String)
+data class Group(val name: String, val frequency: String, val rangeDescription: String? = "Standard Range")
 
 interface WalkieApi {
     @POST("/api/auth/register")
@@ -23,7 +38,7 @@ interface WalkieApi {
     suspend fun verify(@Body request: RegisterRequest): AuthResponse
 
     @GET("/api/groups")
-    suspend fun getGroups(): List<Group>
+    suspend fun getGroups(@retrofit2.http.Query("userId") userId: String): List<Group>
 
     @POST("/api/groups")
     suspend fun createGroup(@Body request: GroupRequest): GroupResponse

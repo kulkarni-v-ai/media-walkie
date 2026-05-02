@@ -2,6 +2,8 @@ package com.mediawalkie.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +21,8 @@ import kotlinx.coroutines.launch
 fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () -> Unit) {
     var name by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -26,7 +30,8 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -37,6 +42,22 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
             value = name,
             onValueChange = { name = it },
             label = { Text("Call Sign (Name)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email Address") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = phone,
+            onValueChange = { phone = it },
+            label = { Text("Phone Number") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -51,7 +72,7 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
         Spacer(modifier = Modifier.height(24.dp))
 
         if (errorMsg.isNotEmpty()) {
-            Text(text = errorMsg, color = MaterialTheme.colorScheme.error)
+            Text(text = errorMsg, color = MaterialTheme.colorScheme.error, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             Spacer(modifier = Modifier.height(16.dp))
         }
 
@@ -61,13 +82,8 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
                     scope.launch {
                         isLoading = true
                         try {
-                            val res = api.register(RegisterRequest(name, pin, "device123"))
-                            if (res.user?.isVerified == true) {
-                                sessionManager.saveSession(res.user.name, true)
-                                onVerified()
-                            } else {
-                                errorMsg = res.error ?: "Account created! Pending admin verification."
-                            }
+                            val res = api.register(RegisterRequest(name, pin, "device123", email, phone))
+                            errorMsg = res.error ?: "Account created! Pending admin verification."
                         } catch (e: Exception) {
                             errorMsg = "Network error: ${e.message}"
                         }
@@ -87,6 +103,8 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
                             val res = api.verify(RegisterRequest(name, pin, "device123"))
                             if (res.user?.isVerified == true) {
                                 sessionManager.saveSession(res.user.name, true)
+                                // Save userId in session for group filtering
+                                sessionManager.saveUserId(res.user._id)
                                 onVerified()
                             } else {
                                 errorMsg = res.error ?: "Verification failed."

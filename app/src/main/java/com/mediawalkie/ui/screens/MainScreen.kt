@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unknown", api: WalkieApi? = null) {
+fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unknown", api: WalkieApi? = null, userId: String = "") {
     var isPressed by remember { mutableStateOf(false) }
     var frequency by remember { mutableStateOf("104.5") }
     var groups by remember { mutableStateOf<List<Group>>(emptyList()) }
@@ -41,10 +41,10 @@ fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unkno
     val scope = rememberCoroutineScope()
 
     // Fetch groups on load
-    LaunchedEffect(Unit) {
+    LaunchedEffect(userId) {
         try {
-            if (api != null) {
-                groups = api.getGroups()
+            if (api != null && userId.isNotEmpty()) {
+                groups = api.getGroups(userId)
             }
         } catch (e: Exception) {
             // Ignore error for now

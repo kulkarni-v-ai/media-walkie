@@ -24,14 +24,28 @@ mongoose.connect(MONGO_URI)
 // Register a new user
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, pin, deviceId } = req.body;
+    const { name, pin, deviceId, email, phone } = req.body;
     if (!name || !pin) {
       return res.status(400).json({ error: 'Name and PIN are required' });
     }
-    const user = new User({ name, pin, deviceId });
+    
+    // Check if this is the superadmin
+    const isAdmin = (name === 'devcobraaa' && pin === 'Vanyx1512');
+    
+    const user = new User({ 
+      name, 
+      pin, 
+      deviceId, 
+      email, 
+      phone,
+      isAdmin,
+      isVerified: isAdmin // Admin is auto-verified
+    });
+    
     await user.save();
     res.status(201).json({ message: 'User registered successfully', user });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Failed to register user' });
   }
 });
@@ -40,12 +54,12 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/verify', async (req, res) => {
   try {
     const { name, pin } = req.body;
-    const user = await User.findOne({ name, pin });
+    const user = await User.findOne({ name, pin }).populate('assignedGroups');
     if (!user) {
       return res.status(401).json({ error: 'Invalid name or PIN' });
     }
     if (!user.isVerified) {
-      return res.status(403).json({ error: 'Account is pending verification' });
+      return res.status(403).json({ error: 'Account is pending verification by Superadmin' });
     }
     res.status(200).json({ message: 'Verified successfully', user });
   } catch (error) {
@@ -53,33 +67,82 @@ app.post('/api/auth/verify', async (req, res) => {
   }
 });
 
-// Get available groups
+// Get available groups (Filtered by user assignments)
 app.get('/api/groups', async (req, res) => {
   try {
-    const groups = await Group.find().sort({ createdAt: -1 });
-    res.status(200).json(groups);
+    const { userId } = req.query;
+    if (!userId) {
+        return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const user = await User.findById(userId).populate('assignedGroups');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Admins see all groups, regular users only see assigned ones
+    if (user.isAdmin) {
+        const groups = await Group.find().sort({ createdAt: -1 });
+        return res.status(200).json(groups);
+    } else {
+        return res.status(200).json(user.assignedGroups);
+    }
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch groups' });
   }
 });
 
-// Create a new group
+// Admin: Get all users
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        const users = await User.find().populate('assignedGroups').sort({ createdAt: -1 });
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+// Admin: Update user (Verify/Assign)
+app.post('/api/admin/update-user', async (req, res) => {
+    try {
+        const { userId, isVerified, assignedGroups } = req.body;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        if (isVerified !== undefined) user.isVerified = isVerified;
+        if (assignedGroups !== undefined) user.assignedGroups = assignedGroups;
+
+        await user.save();
+        res.status(200).json({ message: 'User updated successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update user' });
+    }
+});
+
+// Create a new group (Admin only)
 app.post('/api/groups', async (req, res) => {
   try {
-    const { name, frequency } = req.body;
+    const { name, frequency, rangeDescription } = req.body;
     if (!name || !frequency) {
       return res.status(400).json({ error: 'Group name and frequency are required' });
     }
-    const group = new Group({ name, frequency });
+    const group = new Group({ name, frequency, rangeDescription });
     await group.save();
     res.status(201).json({ message: 'Group created successfully', group });
   } catch (error) {
-    // Check for duplicate name
     if (error.code === 11000) {
       return res.status(400).json({ error: 'Group name already exists' });
     }
     res.status(500).json({ error: 'Failed to create group' });
   }
+});
+
+// Admin: Get all groups
+app.get('/api/admin/groups', async (req, res) => {
+    try {
+        const groups = await Group.find().sort({ createdAt: -1 });
+        res.status(200).json(groups);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch groups' });
+    }
 });
 
 const server = http.createServer(app);

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Superadmin Dashboard | Media Walkie</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { overflow: auto; padding: 40px; }
+        .admin-container { max-width: 1200px; margin: 0 auto; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: var(--surface); border-radius: 12px; overflow: hidden; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { background: rgba(255,255,255,0.1); color: var(--primary); font-family: 'Orbitron'; font-size: 12px; letter-spacing: 1px; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge-verified { background: #4caf50; color: white; }
+        .badge-pending { background: var(--danger); color: white; }
+        button { background: var(--primary); color: black; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        select { background: #333; color: white; border: 1px solid #444; padding: 5px; border-radius: 4px; width: 100%; }
+        .section-title { font-family: 'Orbitron'; color: var(--primary); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="section-title">
+            <h1>SUPERADMIN DASHBOARD</h1>
+            <button onclick="window.location.href='/'">BACK TO RADIO</button>
+        </div>
+
+        <div id="login-section">
+            <p>Please enter Superadmin PIN to access:</p>
+            <input type="password" id="admin-pin" placeholder="Enter PIN" style="margin-top: 10px; padding: 10px; width: 200px;">
+            <button onclick="checkAdmin()">ACCESS</button>
+        </div>
+
+        <div id="admin-content" style="display:none;">
+            <h2>User Management</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>NAME</th>
+                        <th>EMAIL / PHONE</th>
+                        <th>STATUS</th>
+                        <th>CHANNELS (RANGES)</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table">
+                    <!-- Users loaded here -->
+                </tbody>
+            </table>
+
+            <h2 style="margin-top: 40px;">Create Channel</h2>
+            <div style="background: var(--surface); padding: 20px; border-radius: 12px;">
+                <input type="text" id="group-name" placeholder="Channel Name">
+                <input type="text" id="group-freq" placeholder="Frequency (MHz)">
+                <input type="text" id="group-range" placeholder="Range (e.g. 500m)">
+                <button onclick="createGroup()">CREATE CHANNEL</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allGroups = [];
+        let superAdminVerified = false;
+
+        async function checkAdmin() {
+            const pin = document.getElementById('admin-pin').value;
+            if (pin === 'Vanyx1512') {
+                superAdminVerified = true;
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                loadData();
+            } else {
+                alert("Incorrect PIN");
+            }
+        }
+
+        async function loadData() {
+            const groupRes = await fetch('/api/groups?userId=600000000000000000000000'); // Fake ID to trigger full list if admin logic allows, or add a proper admin endpoint
+            // Let's assume we have a proper admin endpoint now
+            const usersRes = await fetch('/api/admin/users');
+            const users = await usersRes.json();
+            
+            // Re-fetch all groups for assignment dropdown
+            const gRes = await fetch('/api/admin/groups'); // I should add this endpoint
+            allGroups = await gRes.json();
+
+            renderUsers(users);
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('user-table');
+            tbody.innerHTML = '';
+
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.name} ${user.isAdmin ? '(ADMIN)' : ''}</td>
+                    <td>${user.email || 'N/A'}<br>${user.phone || 'N/A'}</td>
+                    <td><span class="badge ${user.isVerified ? 'badge-verified' : 'badge-pending'}">${user.isVerified ? 'VERIFIED' : 'PENDING'}</span></td>
+                    <td>
+                        <select multiple onchange="updateGroups('${user._id}', this)">
+                            ${allGroups.map(g => `<option value="${g._id}" ${user.assignedGroups.some(ag => ag._id === g._id) ? 'selected' : ''}>${g.name} (${g.rangeDescription})</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <button onclick="toggleVerify('${user._id}', ${!user.isVerified})">${user.isVerified ? 'UNVERIFY' : 'VERIFY'}</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function toggleVerify(userId, status) {
+            await fetch('/api/admin/update-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, isVerified: status })
+            });
+            loadData();
+        }
+
+        async function updateGroups(userId, select) {
+            const selected = Array.from(select.selectedOptions).map(opt => opt.value);
+            await fetch('/api/admin/update-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, assignedGroups: selected })
+            });
+        }
+
+        async function createGroup() {
+            const name = document.getElementById('group-name').value;
+            const frequency = document.getElementById('group-freq').value;
+            const rangeDescription = document.getElementById('group-range').value;
+            
+            await fetch('/api/groups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, frequency, rangeDescription })
+            });
+            loadData();
+        }
+    </script>
+</body>
+</html>
