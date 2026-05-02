@@ -9,7 +9,9 @@ import android.media.MediaRecorder
 import android.util.Log
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class AudioEngine {
+import android.content.Context
+
+class AudioEngine(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioEngine"
@@ -39,7 +41,7 @@ class AudioEngine {
 
         try {
             audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
                 SAMPLE_RATE,
                 CHANNEL_CONFIG_IN,
                 AUDIO_FORMAT,
@@ -56,12 +58,24 @@ class AudioEngine {
 
             Thread {
                 val buffer = ByteArray(minBufferSizeIn)
+                val chunkBuffer = java.io.ByteArrayOutputStream()
+                val TARGET_CHUNK_SIZE = 8192 // Send ~250ms chunks to avoid flooding the network
+
                 while (isRecording) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                     if (read > 0) {
-                        val dataToSend = buffer.copyOf(read)
-                        onAudioDataCaptured?.invoke(dataToSend)
+                        chunkBuffer.write(buffer, 0, read)
+                        if (chunkBuffer.size() >= TARGET_CHUNK_SIZE) {
+                            val dataToSend = chunkBuffer.toByteArray()
+                            onAudioDataCaptured?.invoke(dataToSend)
+                            chunkBuffer.reset()
+                        }
                     }
+                }
+                
+                // Flush any remaining audio when PTT is released
+                if (chunkBuffer.size() > 0) {
+                    onAudioDataCaptured?.invoke(chunkBuffer.toByteArray())
                 }
             }.start()
 
@@ -81,11 +95,24 @@ class AudioEngine {
         if (isPlaying) return
 
         try {
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            
+            // Walkie Talkie Hack: Force it to be treated as a call on loudspeaker
+            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            audioManager.isSpeakerphoneOn = true
+            
+            // If the user completely muted the call volume, bump it up so they hear the walkie
+            val streamType = AudioManager.STREAM_VOICE_CALL
+            if (audioManager.getStreamVolume(streamType) == 0) {
+                val maxVol = audioManager.getStreamMaxVolume(streamType)
+                audioManager.setStreamVolume(streamType, maxVol / 2, 0)
+            }
+
             audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(
                     android.media.AudioAttributes.Builder()
-                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(android.media.AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build()
                 )
                 .setAudioFormat(

@@ -10,7 +10,7 @@ class RoutingManager(private val context: Context) {
 
     private val TAG = "RoutingManager"
     
-    val audioEngine = AudioEngine()
+    val audioEngine = AudioEngine(context)
     val meshManager = MeshManager(context)
     val webRTCEngine = WebRTCEngine(context)
 

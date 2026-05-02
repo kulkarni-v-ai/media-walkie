@@ -1,0 +1,42 @@
+package com.mediawalkie.data.api
+
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+
+// Data classes for API requests/responses
+data class RegisterRequest(val name: String, val pin: String, val deviceId: String)
+data class AuthResponse(val message: String?, val error: String?, val user: User?)
+data class User(val name: String, val pin: String, val deviceId: String, val isVerified: Boolean)
+
+data class GroupRequest(val name: String, val frequency: String)
+data class GroupResponse(val message: String?, val error: String?, val group: Group?)
+data class Group(val name: String, val frequency: String)
+
+interface WalkieApi {
+    @POST("/api/auth/register")
+    suspend fun register(@Body request: RegisterRequest): AuthResponse
+
+    @POST("/api/auth/verify")
+    suspend fun verify(@Body request: RegisterRequest): AuthResponse
+
+    @GET("/api/groups")
+    suspend fun getGroups(): List<Group>
+
+    @POST("/api/groups")
+    suspend fun createGroup(@Body request: GroupRequest): GroupResponse
+
+    companion object {
+        private const val BASE_URL = "https://media-walkie-signaling.onrender.com"
+
+        fun create(baseUrl: String = BASE_URL): WalkieApi {
+            val retrofit = Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+            return retrofit.create(WalkieApi::class.java)
+        }
+    }
+}
