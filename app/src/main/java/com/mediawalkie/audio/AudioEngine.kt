@@ -58,24 +58,12 @@ class AudioEngine(private val context: Context) {
 
             Thread {
                 val buffer = ByteArray(minBufferSizeIn)
-                val chunkBuffer = java.io.ByteArrayOutputStream()
-                val TARGET_CHUNK_SIZE = 8192 // Send ~250ms chunks to avoid flooding the network
-
                 while (isRecording) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                     if (read > 0) {
-                        chunkBuffer.write(buffer, 0, read)
-                        if (chunkBuffer.size() >= TARGET_CHUNK_SIZE) {
-                            val dataToSend = chunkBuffer.toByteArray()
-                            onAudioDataCaptured?.invoke(dataToSend)
-                            chunkBuffer.reset()
-                        }
+                        val dataToSend = buffer.copyOf(read)
+                        onAudioDataCaptured?.invoke(dataToSend)
                     }
-                }
-                
-                // Flush any remaining audio when PTT is released
-                if (chunkBuffer.size() > 0) {
-                    onAudioDataCaptured?.invoke(chunkBuffer.toByteArray())
                 }
             }.start()
 
@@ -95,9 +83,6 @@ class AudioEngine(private val context: Context) {
         if (isPlaying) return
 
         try {
-            // Ensure the track buffer is large enough to comfortably hold our 8192 byte chunks
-            val trackBufferSize = Math.max(minBufferSizeOut * 4, 32768)
-
             audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(
                     android.media.AudioAttributes.Builder()
@@ -112,7 +97,7 @@ class AudioEngine(private val context: Context) {
                         .setChannelMask(CHANNEL_CONFIG_OUT)
                         .build()
                 )
-                .setBufferSizeInBytes(trackBufferSize)
+                .setBufferSizeInBytes(minBufferSizeOut)
                 .setTransferMode(AudioTrack.MODE_STREAM)
                 .build()
 
