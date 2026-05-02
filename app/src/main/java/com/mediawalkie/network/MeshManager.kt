@@ -74,6 +74,7 @@ class MeshManager(private val context: Context) {
     }
 
     fun startAdvertising(frequency: String) {
+        connectionsClient.stopAdvertising()
         val options = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
         connectionsClient.startAdvertising(
             "Device",
@@ -88,6 +89,7 @@ class MeshManager(private val context: Context) {
     }
 
     fun startDiscovery(frequency: String) {
+        connectionsClient.stopDiscovery()
         val options = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
         connectionsClient.startDiscovery(
             "$SERVICE_ID-$frequency",

@@ -58,12 +58,21 @@ class AudioEngine(private val context: Context) {
 
             Thread {
                 val buffer = ByteArray(minBufferSizeIn)
+                val chunkBuffer = java.io.ByteArrayOutputStream()
+                val TARGET_CHUNK_SIZE = 3200 // 100ms of audio at 16kHz
+
                 while (isRecording) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                     if (read > 0) {
-                        val dataToSend = buffer.copyOf(read)
-                        onAudioDataCaptured?.invoke(dataToSend)
+                        chunkBuffer.write(buffer, 0, read)
+                        if (chunkBuffer.size() >= TARGET_CHUNK_SIZE) {
+                            onAudioDataCaptured?.invoke(chunkBuffer.toByteArray())
+                            chunkBuffer.reset()
+                        }
                     }
+                }
+                if (chunkBuffer.size() > 0) {
+                    onAudioDataCaptured?.invoke(chunkBuffer.toByteArray())
                 }
             }.start()
 
@@ -83,6 +92,19 @@ class AudioEngine(private val context: Context) {
         if (isPlaying) return
 
         try {
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            
+            // Volume Boost
+            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 3) {
+                audioManager.setStreamVolume(
+                    AudioManager.STREAM_MUSIC, 
+                    audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2, 
+                    0
+                )
+            }
+
+            val trackBufferSize = Math.max(minBufferSizeOut * 8, 16384)
+
             audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(
                     android.media.AudioAttributes.Builder()
@@ -97,7 +119,7 @@ class AudioEngine(private val context: Context) {
                         .setChannelMask(CHANNEL_CONFIG_OUT)
                         .build()
                 )
-                .setBufferSizeInBytes(minBufferSizeOut)
+                .setBufferSizeInBytes(trackBufferSize)
                 .setTransferMode(AudioTrack.MODE_STREAM)
                 .build()
 
@@ -108,12 +130,8 @@ class AudioEngine(private val context: Context) {
                 while (isPlaying) {
                     val buffer = jitterBuffer.poll()
                     if (buffer != null) {
-                        val written = audioTrack?.write(buffer, 0, buffer.size) ?: 0
-                        if (written < 0) {
-                            Log.e(TAG, "AudioTrack write failed with error code: $written")
-                        }
+                        audioTrack?.write(buffer, 0, buffer.size)
                     } else {
-                        // Sleep briefly if buffer is empty
                         Thread.sleep(10)
                     }
                 }
@@ -134,9 +152,10 @@ class AudioEngine(private val context: Context) {
     fun queueAudioForPlayback(data: ByteArray) {
         if (isPlaying) {
             jitterBuffer.offer(data)
-            // Limit buffer size to prevent massive latency build-up
-            if (jitterBuffer.size > 20) {
-                jitterBuffer.poll() // Drop oldest packet
+            // Jitter buffer: wait for at least 2 packets before starting to play to smooth out "cut cut"
+            // but keep it small enough to avoid massive delay
+            if (jitterBuffer.size > 10) {
+                jitterBuffer.poll() 
             }
         }
     }
