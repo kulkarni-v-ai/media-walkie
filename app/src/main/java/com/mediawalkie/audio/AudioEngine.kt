@@ -16,13 +16,16 @@ class AudioEngine(private val context: Context) {
     private val deviceId = java.util.UUID.randomUUID().toString().substring(0, 4)
     private var sequenceNumber = 0L
     private val processedPacketIds = mutableSetOf<String>()
+    
+    var userName: String = "User" // Set from MainActivity
 
     companion object {
         private const val TAG = "AudioEngine"
-        private const val SAMPLE_RATE = 16000 // Revert to 16kHz for better hardware compatibility
+        private const val SAMPLE_RATE = 16000 
         private const val CHANNEL_CONFIG_IN = AudioFormat.CHANNEL_IN_MONO
         private const val CHANNEL_CONFIG_OUT = AudioFormat.CHANNEL_OUT_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+        private const val HEADER_SIZE = 32 // Increased for Name
     }
 
     private var audioRecord: AudioRecord? = null
@@ -36,8 +39,11 @@ class AudioEngine(private val context: Context) {
 
     private val jitterBuffer = ConcurrentLinkedQueue<ByteArray>()
     
-    // Callback to send captured audio to RoutingManager
     var onAudioDataCaptured: ((ByteArray) -> Unit)? = null
+    var onSpeakerChanged: ((String?) -> Unit)? = null
+
+    private var currentSpeaker: String? = null
+    private var lastSpeakerTimestamp = 0L
 
     @SuppressLint("MissingPermission")
     fun startCapture() {
@@ -85,15 +91,21 @@ class AudioEngine(private val context: Context) {
                         if (chunkBuffer.size() >= TARGET_CHUNK_SIZE) {
                             val audioData = chunkBuffer.toByteArray()
                             
-                            // Add Deduplication Header: [DeviceID(4b)][Seq(8b)][Data...]
+                            // 32-Byte Header: [ID(4)][Seq(8)][Name(20)]
                             val packet = java.io.ByteArrayOutputStream()
                             packet.write(deviceId.toByteArray())
                             val seqBytes = java.nio.ByteBuffer.allocate(8).putLong(sequenceNumber++).array()
                             packet.write(seqBytes)
+                            
+                            // Name: Padded to 20 bytes
+                            val nameBytes = userName.toByteArray().let {
+                                if (it.size > 20) it.copyOfRange(0, 20)
+                                else it + ByteArray(20 - it.size)
+                            }
+                            packet.write(nameBytes)
                             packet.write(audioData)
                             
                             val finalPayload = packet.toByteArray()
-                            Log.d(TAG, "Captured chunk: ${finalPayload.size} bytes (Seq: $sequenceNumber)")
                             onAudioDataCaptured?.invoke(finalPayload)
                             chunkBuffer.reset()
                         }
@@ -121,20 +133,6 @@ class AudioEngine(private val context: Context) {
         try {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
             
-            // Volume Boost: Wrapped in try-catch to avoid crashing if permission is denied
-            try {
-                if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 3) {
-                    audioManager.setStreamVolume(
-                        AudioManager.STREAM_MUSIC, 
-                        audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2, 
-                        0
-                    )
-                }
-            } catch (volEx: Exception) {
-                Log.w(TAG, "Could not adjust volume: ${volEx.message}")
-            }
-
-            // Small buffer for low latency
             val trackBufferSize = Math.max(minBufferSizeOut * 2, 4096)
 
             audioTrack = AudioTrack.Builder()
@@ -163,9 +161,16 @@ class AudioEngine(private val context: Context) {
                     val buffer = jitterBuffer.poll()
                     if (buffer != null) {
                         audioTrack?.write(buffer, 0, buffer.size)
+                        
+                        // Speaker status timeout
+                        if (System.currentTimeMillis() - lastSpeakerTimestamp > 1000) {
+                            updateSpeaker(null)
+                        }
                     } else {
-                        // Very short sleep to stay responsive
-                        Thread.sleep(5)
+                        Thread.sleep(10)
+                        if (System.currentTimeMillis() - lastSpeakerTimestamp > 500) {
+                            updateSpeaker(null)
+                        }
                     }
                 }
             }.start()
@@ -174,8 +179,14 @@ class AudioEngine(private val context: Context) {
         }
     }
 
+    private fun updateSpeaker(name: String?) {
+        if (currentSpeaker != name) {
+            currentSpeaker = name
+            onSpeakerChanged?.invoke(name)
+        }
+    }
+
     fun stopPlayback() {
-        Log.d(TAG, "Stopping playback")
         isPlaying = false
         audioTrack?.stop()
         audioTrack?.release()
@@ -187,25 +198,27 @@ class AudioEngine(private val context: Context) {
         if (!isPlaying) return
 
         try {
-            // Extract Header: [DeviceID(4b)][Seq(8b)]
-            if (payload.size < 12) return
+            if (payload.size < HEADER_SIZE) return
             val senderId = String(payload.copyOfRange(0, 4))
             val seq = java.nio.ByteBuffer.wrap(payload.copyOfRange(4, 12)).long
             val packetId = "$senderId-$seq"
 
-            // 1. Deduplication: Don't play (or relay) the same packet twice
+            // 1. Deduplication
             if (processedPacketIds.contains(packetId)) return
             processedPacketIds.add(packetId)
-            if (processedPacketIds.size > 100) processedPacketIds.remove(processedPacketIds.first())
+            if (processedPacketIds.size > 200) processedPacketIds.remove(processedPacketIds.first())
 
-            // 2. Self-Mute: Don't play our own forwarded audio
+            // 2. Self-Mute
             if (senderId == deviceId) return
 
-            val audioData = payload.copyOfRange(12, payload.size)
-            Log.d(TAG, "Queuing packet $packetId for playback")
-            
+            // 3. Extract Name
+            val senderName = String(payload.copyOfRange(12, 32)).trim { it <= ' ' || it == '\u0000' }
+            lastSpeakerTimestamp = System.currentTimeMillis()
+            updateSpeaker(senderName)
+
+            val audioData = payload.copyOfRange(HEADER_SIZE, payload.size)
             jitterBuffer.offer(audioData)
-            if (jitterBuffer.size > 6) jitterBuffer.poll()
+            if (jitterBuffer.size > 8) jitterBuffer.poll()
         } catch (e: Exception) {
             Log.e(TAG, "Error processing incoming packet", e)
         }

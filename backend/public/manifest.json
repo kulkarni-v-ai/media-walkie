@@ -1,0 +1,15 @@
+{
+    "name": "Media Walkie",
+    "short_name": "Walkie",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#ffd700",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/3103/3103598.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

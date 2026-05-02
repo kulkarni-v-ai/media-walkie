@@ -23,20 +23,20 @@ class RoutingManager(private val context: Context) {
     var connectedMeshPeers by mutableStateOf(0)
         private set
     private var isPttActive = false
+    var currentSpeaker by mutableStateOf<String?>(null)
+        private set
 
     init {
         checkInternet()
         // Wire up MeshManager callbacks
         meshManager.onPayloadReceived = { payload ->
-            if (!isPttActive) {
-                Log.d(TAG, "Received payload from Mesh. Playing...")
-                audioEngine.queueAudioForPlayback(payload)
-                
-                // GATEWAY LOGIC: Forward mesh audio to the global internet (WebRTC)
-                if (isInternetAvailable) {
-                    Log.d(TAG, "Acting as Gateway: Forwarding Mesh -> WebRTC")
-                    webRTCEngine.sendAudioData(payload)
-                }
+            Log.d(TAG, "Received payload from Mesh. Playing...")
+            audioEngine.queueAudioForPlayback(payload)
+            
+            // GATEWAY LOGIC: Forward mesh audio to the global internet (WebRTC)
+            if (isInternetAvailable) {
+                Log.d(TAG, "Acting as Gateway: Forwarding Mesh -> WebRTC")
+                webRTCEngine.sendAudioData(payload)
             }
         }
 
@@ -47,21 +47,23 @@ class RoutingManager(private val context: Context) {
 
         // Wire up WebRTCEngine callbacks
         webRTCEngine.onAudioDataReceived = { payload ->
-            if (!isPttActive) {
-                Log.d(TAG, "Received payload from WebRTC. Playing...")
-                audioEngine.queueAudioForPlayback(payload)
-                
-                // GATEWAY LOGIC: Forward global audio to the local mesh
-                if (connectedMeshPeers > 0) {
-                    Log.d(TAG, "Acting as Gateway: Forwarding WebRTC -> Mesh")
-                    meshManager.sendAudio(payload)
-                }
+            Log.d(TAG, "Received payload from WebRTC. Playing...")
+            audioEngine.queueAudioForPlayback(payload)
+            
+            // GATEWAY LOGIC: Forward global audio to the local mesh
+            if (connectedMeshPeers > 0) {
+                Log.d(TAG, "Acting as Gateway: Forwarding WebRTC -> Mesh")
+                meshManager.sendAudio(payload)
             }
         }
 
         // Wire up AudioEngine to Routing Manager
         audioEngine.onAudioDataCaptured = { payload ->
             routeOutboundAudio(payload)
+        }
+
+        audioEngine.onSpeakerChanged = { name ->
+            currentSpeaker = name
         }
 
         // Periodic internet check to handle on-the-fly network changes
@@ -118,8 +120,9 @@ class RoutingManager(private val context: Context) {
         webRTCEngine.disconnect()
     }
 
-    fun setPttActive(active: Boolean) {
+    fun setPttActive(active: Boolean, name: String = "User") {
         isPttActive = active
+        audioEngine.userName = name
         if (active) {
             audioEngine.startCapture()
         } else {

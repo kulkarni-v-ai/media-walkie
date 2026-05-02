@@ -59,14 +59,38 @@ fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unkno
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
-        // User Profile Header
-        Text(
-            text = "Welcome, $userName",
-            color = PrimaryVibrant,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.Start)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Welcome, $userName",
+                color = PrimaryVibrant,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+            
+            // Speaker Indicator
+            val activeSpeaker = routingManager?.currentSpeaker
+            if (activeSpeaker != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(Color.Red)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "$activeSpeaker is talking...",
+                        color = Color.Red,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
 
         // Frequency Tuner UI
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -194,10 +218,10 @@ fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unkno
                     detectTapGestures(
                         onPress = {
                             isPressed = true
-                            routingManager?.setPttActive(true)
+                            routingManager?.setPttActive(true, userName)
                             tryAwaitRelease()
                             isPressed = false
-                            routingManager?.setPttActive(false)
+                            routingManager?.setPttActive(false, userName)
                         }
                     )
                 },

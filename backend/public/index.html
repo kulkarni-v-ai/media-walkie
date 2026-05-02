@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Media Walkie | iOS Radio</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="status-bar">
+                <span id="connection-status" class="status-dot"></span>
+                <span id="status-text">CONNECTING...</span>
+            </div>
+            <h1 class="brand">MEDIA WALKIE</h1>
+        </header>
+
+        <main>
+            <div class="frequency-display">
+                <span class="label">CHANNEL</span>
+                <div class="frequency-value">
+                    <span id="frequency">104.5</span>
+                    <span class="unit">MHz</span>
+                </div>
+                <div class="speaker-indicator" id="speaker-indicator">
+                    <div class="pulse-dot"></div>
+                    <span id="speaker-name">WAITING...</span>
+                </div>
+            </div>
+
+            <div class="visualizer-container">
+                <canvas id="visualizer"></canvas>
+            </div>
+
+            <div class="controls">
+                <div class="user-info">
+                    <input type="text" id="username" placeholder="Your Name" maxlength="20">
+                </div>
+                
+                <div class="ptt-wrapper">
+                    <button id="ptt-button" class="ptt-button">
+                        <div class="ptt-inner">
+                            <span id="ptt-text">HOLD TO TALK</span>
+                        </div>
+                    </button>
+                    <div class="ptt-glow"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="channel-selector">
+                <button onclick="changeFreq('104.5')">DEF</button>
+                <button onclick="changeFreq('98.0')">CH1</button>
+                <button onclick="changeFreq('101.2')">CH2</button>
+                <button onclick="promptFreq()">+</button>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
