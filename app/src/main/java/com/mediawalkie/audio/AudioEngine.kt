@@ -41,7 +41,7 @@ class AudioEngine(private val context: Context) {
 
         try {
             audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                MediaRecorder.AudioSource.MIC,
                 SAMPLE_RATE,
                 CHANNEL_CONFIG_IN,
                 AUDIO_FORMAT,
@@ -95,24 +95,11 @@ class AudioEngine(private val context: Context) {
         if (isPlaying) return
 
         try {
-            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            
-            // Walkie Talkie Hack: Force it to be treated as a call on loudspeaker
-            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-            audioManager.isSpeakerphoneOn = true
-            
-            // If the user completely muted the call volume, bump it up so they hear the walkie
-            val streamType = AudioManager.STREAM_VOICE_CALL
-            if (audioManager.getStreamVolume(streamType) == 0) {
-                val maxVol = audioManager.getStreamMaxVolume(streamType)
-                audioManager.setStreamVolume(streamType, maxVol / 2, 0)
-            }
-
             audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(
                     android.media.AudioAttributes.Builder()
-                        .setUsage(android.media.AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )
                 .setAudioFormat(

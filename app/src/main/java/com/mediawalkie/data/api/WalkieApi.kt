@@ -32,8 +32,15 @@ interface WalkieApi {
         private const val BASE_URL = "https://media-walkie-signaling.onrender.com"
 
         fun create(baseUrl: String = BASE_URL): WalkieApi {
+            val client = okhttp3.OkHttpClient.Builder()
+                .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
+
             val retrofit = Retrofit.Builder()
                 .baseUrl(baseUrl)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
             return retrofit.create(WalkieApi::class.java)
