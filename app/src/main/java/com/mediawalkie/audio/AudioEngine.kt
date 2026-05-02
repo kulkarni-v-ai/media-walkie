@@ -15,7 +15,7 @@ class AudioEngine(private val context: Context) {
 
     companion object {
         private const val TAG = "AudioEngine"
-        private const val SAMPLE_RATE = 16000 // 16kHz
+        private const val SAMPLE_RATE = 8000 // 8kHz for minimum bandwidth usage
         private const val CHANNEL_CONFIG_IN = AudioFormat.CHANNEL_IN_MONO
         private const val CHANNEL_CONFIG_OUT = AudioFormat.CHANNEL_OUT_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT

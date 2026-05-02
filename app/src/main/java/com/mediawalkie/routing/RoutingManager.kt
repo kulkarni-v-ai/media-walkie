@@ -6,6 +6,8 @@ import androidx.compose.runtime.*
 import com.mediawalkie.audio.AudioEngine
 import com.mediawalkie.network.MeshManager
 import com.mediawalkie.network.WebRTCEngine
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 
 class RoutingManager(private val context: Context) {
 
@@ -22,6 +24,7 @@ class RoutingManager(private val context: Context) {
     private var isPttActive = false
 
     init {
+        checkInternet()
         // Wire up MeshManager callbacks
         meshManager.onPayloadReceived = { payload ->
             if (!isPttActive) {
@@ -65,16 +68,31 @@ class RoutingManager(private val context: Context) {
         activeFrequency = frequency
         audioEngine.startPlayback() // Always listen
         
+        checkInternet() // Refresh status on start
+        
         // Start offline mesh discovery/advertising
         meshManager.startAdvertising(frequency)
         meshManager.startDiscovery(frequency)
 
-        // Assume check internet available (mocked for now)
-        isInternetAvailable = true 
         if (isInternetAvailable) {
             webRTCEngine.initialize()
             // Connect to local or remote Node.js signaling server
             webRTCEngine.connectToSignalingServer("https://media-walkie-signaling.onrender.com", frequency)
+        }
+    }
+
+    private fun checkInternet() {
+        try {
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val network = connectivityManager.activeNetwork
+            val capabilities = connectivityManager.getNetworkCapabilities(network)
+            isInternetAvailable = capabilities != null && (
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+            )
+            Log.d(TAG, "Internet check: available = $isInternetAvailable")
+        } catch (e: Exception) {
+            isInternetAvailable = false
         }
     }
 
