@@ -27,17 +27,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
     buildFeatures {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.8"
     }
     packaging {
         resources {
@@ -57,10 +57,10 @@ dependencies {
     implementation("androidx.compose.material3:material3")
 
     // Google Nearby Connections API
-    implementation("com.google.android.gms:play-services-nearby:19.2.2")
+    implementation("com.google.android.gms:play-services-nearby:18.7.0")
 
-    // WebRTC Core Library for Android
-    implementation("org.webrtc:google-webrtc:1.0.32006")
+    // WebRTC Core Library for Android (maintained community build)
+    implementation("io.github.webrtc-sdk:android:114.5735.07")
     
     // Socket.IO Client for WebRTC Signaling
     implementation("io.socket:socket.io-client:2.1.0")

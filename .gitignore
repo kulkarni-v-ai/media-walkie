@@ -14,5 +14,8 @@
 .cxx
 local.properties
 
-# backend
-node_modules/
+# App build directory
+app/build/
+
+# Backend node_modules
+backend/node_modules/

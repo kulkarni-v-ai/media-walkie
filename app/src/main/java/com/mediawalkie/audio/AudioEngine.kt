@@ -81,14 +81,23 @@ class AudioEngine {
         if (isPlaying) return
 
         try {
-            audioTrack = AudioTrack(
-                AudioManager.STREAM_MUSIC,
-                SAMPLE_RATE,
-                CHANNEL_CONFIG_OUT,
-                AUDIO_FORMAT,
-                minBufferSizeOut,
-                AudioTrack.MODE_STREAM
-            )
+            audioTrack = AudioTrack.Builder()
+                .setAudioAttributes(
+                    android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setEncoding(AUDIO_FORMAT)
+                        .setSampleRate(SAMPLE_RATE)
+                        .setChannelMask(CHANNEL_CONFIG_OUT)
+                        .build()
+                )
+                .setBufferSizeInBytes(minBufferSizeOut)
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .build()
 
             audioTrack?.play()
             isPlaying = true
