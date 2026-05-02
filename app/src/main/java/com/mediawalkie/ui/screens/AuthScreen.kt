@@ -11,6 +11,7 @@ import com.mediawalkie.data.SessionManager
 import com.mediawalkie.data.api.RegisterRequest
 import com.mediawalkie.data.api.WalkieApi
 import com.mediawalkie.ui.theme.PrimaryVibrant
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,6 +101,20 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
             ) {
                 Text("Login")
             }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        TextButton(
+            onClick = {
+                scope.launch {
+                    // Bypass the server entirely for offline mesh usage
+                    sessionManager.saveSession("Offline User", true)
+                    onVerified()
+                }
+            }
+        ) {
+            Text("Skip & Use Offline Mode", color = Color.Gray)
         }
     }
 }
