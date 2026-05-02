@@ -40,6 +40,7 @@
                     <tr>
                         <th>NAME</th>
                         <th>EMAIL / PHONE</th>
+                        <th>PIN</th>
                         <th>STATUS</th>
                         <th>CHANNELS (RANGES)</th>
                         <th>ACTIONS</th>
@@ -98,6 +99,7 @@
                 tr.innerHTML = `
                     <td>${user.name} ${user.isAdmin ? '(ADMIN)' : ''}</td>
                     <td>${user.email || 'N/A'}<br>${user.phone || 'N/A'}</td>
+                    <td><input type="text" value="${user.pin}" onblur="updatePin('${user._id}', this.value)" style="width: 80px; background: transparent; color: white; border: 1px solid #444;"></td>
                     <td><span class="badge ${user.isVerified ? 'badge-verified' : 'badge-pending'}">${user.isVerified ? 'VERIFIED' : 'PENDING'}</span></td>
                     <td>
                         <select multiple onchange="updateGroups('${user._id}', this)">
@@ -110,6 +112,15 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        async function updatePin(userId, pin) {
+            await fetch('/api/admin/update-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, pin })
+            });
+            console.log("PIN updated for", userId);
         }
 
         async function toggleVerify(userId, status) {

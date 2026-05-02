@@ -100,15 +100,16 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
-// Admin: Update user (Verify/Assign)
+// Admin: Update user (Verify/Assign/PIN)
 app.post('/api/admin/update-user', async (req, res) => {
     try {
-        const { userId, isVerified, assignedGroups } = req.body;
+        const { userId, isVerified, assignedGroups, pin } = req.body;
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         if (isVerified !== undefined) user.isVerified = isVerified;
         if (assignedGroups !== undefined) user.assignedGroups = assignedGroups;
+        if (pin !== undefined) user.pin = pin;
 
         await user.save();
         res.status(200).json({ message: 'User updated successfully' });
