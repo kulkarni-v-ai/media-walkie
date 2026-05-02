@@ -143,6 +143,14 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Binary Audio Broadcast (The Walkie-Talkie Core)
+  socket.on('audio_data', (data) => {
+    if (socket.frequency) {
+      // Send to everyone in the room except the sender
+      socket.to(socket.frequency).emit('audio_data', data);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
     const freq = socket.frequency;
