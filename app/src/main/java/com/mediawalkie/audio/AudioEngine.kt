@@ -95,6 +95,9 @@ class AudioEngine(private val context: Context) {
         if (isPlaying) return
 
         try {
+            // Ensure the track buffer is large enough to comfortably hold our 8192 byte chunks
+            val trackBufferSize = Math.max(minBufferSizeOut * 4, 32768)
+
             audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(
                     android.media.AudioAttributes.Builder()
@@ -109,7 +112,7 @@ class AudioEngine(private val context: Context) {
                         .setChannelMask(CHANNEL_CONFIG_OUT)
                         .build()
                 )
-                .setBufferSizeInBytes(minBufferSizeOut)
+                .setBufferSizeInBytes(trackBufferSize)
                 .setTransferMode(AudioTrack.MODE_STREAM)
                 .build()
 
@@ -120,7 +123,10 @@ class AudioEngine(private val context: Context) {
                 while (isPlaying) {
                     val buffer = jitterBuffer.poll()
                     if (buffer != null) {
-                        audioTrack?.write(buffer, 0, buffer.size)
+                        val written = audioTrack?.write(buffer, 0, buffer.size) ?: 0
+                        if (written < 0) {
+                            Log.e(TAG, "AudioTrack write failed with error code: $written")
+                        }
                     } else {
                         // Sleep briefly if buffer is empty
                         Thread.sleep(10)
