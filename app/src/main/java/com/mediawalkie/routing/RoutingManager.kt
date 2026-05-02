@@ -57,7 +57,7 @@ class RoutingManager(private val context: Context) {
         if (isInternetAvailable) {
             webRTCEngine.initialize()
             // Connect to local or remote Node.js signaling server
-            webRTCEngine.connectToSignalingServer("http://10.0.2.2:3000", frequency)
+            webRTCEngine.connectToSignalingServer("https://media-walkie-signaling.onrender.com", frequency)
         }
     }
 
