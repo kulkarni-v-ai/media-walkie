@@ -8,6 +8,7 @@ import com.mediawalkie.network.MeshManager
 import com.mediawalkie.network.WebRTCEngine
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import kotlinx.coroutines.*
 
 class RoutingManager(private val context: Context) {
 
@@ -61,6 +62,20 @@ class RoutingManager(private val context: Context) {
         // Wire up AudioEngine to Routing Manager
         audioEngine.onAudioDataCaptured = { payload ->
             routeOutboundAudio(payload)
+        }
+
+        // Periodic internet check to handle on-the-fly network changes
+        CoroutineScope(Dispatchers.IO).launch {
+            while (true) {
+                val previousState = isInternetAvailable
+                checkInternet()
+                if (isInternetAvailable && !previousState) {
+                    Log.d(TAG, "Internet restored! Reconnecting WebRTC...")
+                    webRTCEngine.initialize()
+                    webRTCEngine.connectToSignalingServer("https://media-walkie-signaling.onrender.com", activeFrequency)
+                }
+                delay(5000)
+            }
         }
     }
 
