@@ -57,6 +57,22 @@ class AudioEngine(private val context: Context) {
             audioRecord?.startRecording()
             isRecording = true
 
+            // Enable Hardware Echo Cancellation & Noise Suppression
+            try {
+                if (android.media.audiofx.AcousticEchoCanceler.isAvailable()) {
+                    android.media.audiofx.AcousticEchoCanceler.create(audioRecord!!.audioSessionId).apply {
+                        enabled = true
+                    }
+                }
+                if (android.media.audiofx.NoiseSuppressor.isAvailable()) {
+                    android.media.audiofx.NoiseSuppressor.create(audioRecord!!.audioSessionId).apply {
+                        enabled = true
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Hardware audio FX not available: ${e.message}")
+            }
+
             Thread {
                 val buffer = ByteArray(minBufferSizeIn)
                 val chunkBuffer = java.io.ByteArrayOutputStream()

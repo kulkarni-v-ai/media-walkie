@@ -28,8 +28,10 @@ import com.mediawalkie.data.api.GroupRequest
 import com.mediawalkie.data.api.WalkieApi
 import com.mediawalkie.routing.RoutingManager
 import com.mediawalkie.ui.theme.PrimaryVibrant
+import androidx.compose.material3.ExperimentalMaterial3Api
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unknown", api: WalkieApi? = null) {
     var isPressed by remember { mutableStateOf(false) }
@@ -143,7 +145,7 @@ fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unkno
                                         }
                                     }) { Text("Create") }
                                 }
-                                androidx.compose.material3.HorizontalDivider(Modifier.padding(vertical = 16.dp))
+                                androidx.compose.material3.Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.Gray.copy(alpha = 0.2f))
                             }
                         }
 
