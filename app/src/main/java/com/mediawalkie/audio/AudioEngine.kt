@@ -94,13 +94,17 @@ class AudioEngine(private val context: Context) {
         try {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
             
-            // Volume Boost
-            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 3) {
-                audioManager.setStreamVolume(
-                    AudioManager.STREAM_MUSIC, 
-                    audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2, 
-                    0
-                )
+            // Volume Boost: Wrapped in try-catch to avoid crashing if permission is denied
+            try {
+                if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 3) {
+                    audioManager.setStreamVolume(
+                        AudioManager.STREAM_MUSIC, 
+                        audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2, 
+                        0
+                    )
+                }
+            } catch (volEx: Exception) {
+                Log.w(TAG, "Could not adjust volume: ${volEx.message}")
             }
 
             val trackBufferSize = Math.max(minBufferSizeOut * 8, 16384)

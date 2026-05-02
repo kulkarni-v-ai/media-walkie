@@ -17,13 +17,15 @@ class RoutingManager(private val context: Context) {
     private var activeFrequency: String = "104.5"
     private var isInternetAvailable = false
     private var connectedMeshPeers = 0
+    private var isPttActive = false
 
     init {
         // Wire up MeshManager callbacks
         meshManager.onPayloadReceived = { payload ->
-            Log.d(TAG, "Received payload from Mesh. Playing...")
-            audioEngine.queueAudioForPlayback(payload)
-            // TODO: Multi-hop logic: forward to WebRTC if Gateway Node
+            if (!isPttActive) {
+                Log.d(TAG, "Received payload from Mesh. Playing...")
+                audioEngine.queueAudioForPlayback(payload)
+            }
         }
 
         meshManager.onPeerCountChanged = { count ->
@@ -33,9 +35,10 @@ class RoutingManager(private val context: Context) {
 
         // Wire up WebRTCEngine callbacks
         webRTCEngine.onAudioDataReceived = { payload ->
-            Log.d(TAG, "Received payload from WebRTC. Playing...")
-            audioEngine.queueAudioForPlayback(payload)
-            // TODO: Multi-hop logic: forward to Mesh if Gateway Node
+            if (!isPttActive) {
+                Log.d(TAG, "Received payload from WebRTC. Playing...")
+                audioEngine.queueAudioForPlayback(payload)
+            }
         }
 
         // Wire up AudioEngine to Routing Manager
@@ -69,6 +72,7 @@ class RoutingManager(private val context: Context) {
     }
 
     fun setPttActive(active: Boolean) {
+        isPttActive = active
         if (active) {
             audioEngine.startCapture()
         } else {
