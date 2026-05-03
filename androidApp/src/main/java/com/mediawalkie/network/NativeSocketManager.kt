@@ -24,22 +24,30 @@ class NativeSocketManager(private val baseUrl: String) {
     private val _onlineUsers = MutableStateFlow(0)
     val onlineUsers = _onlineUsers.asStateFlow()
 
+    private var lastFrequency: String? = null
+    private var lastUserId: String? = null
+
     fun connect() {
         try {
             val opts = IO.Options()
             opts.forceNew = true
             opts.reconnection = true
-            opts.transports = arrayOf("websocket") // REQUIRED for Render/Heroku binary stability
             
             socket = IO.socket(baseUrl, opts)
             
             socket?.on(Socket.EVENT_CONNECT) {
                 Log.d("NativeSocket", "Connected to Signaling Server!")
                 _connectionState.value = true
+                
+                // AUTO RE-JOIN after reconnection
+                lastFrequency?.let { freq ->
+                    Log.d("NativeSocket", "Auto re-joining frequency: $freq")
+                    joinFrequency(freq, lastUserId)
+                }
             }
 
             socket?.on(Socket.EVENT_DISCONNECT) {
-                Log.d("NativeSocket", "Disconnected from server - Reconnecting...")
+                Log.d("NativeSocket", "Disconnected from server")
                 _connectionState.value = false
             }
 
@@ -49,6 +57,10 @@ class NativeSocketManager(private val baseUrl: String) {
 
             socket?.on("connect_error") {
                 Log.e("NativeSocket", "Connection Error: ${it[0]}")
+            }
+
+            socket?.on("error") {
+                Log.e("NativeSocket", "Server Error: ${it[0]}")
             }
 
             socket?.on("audio_data") { args ->
@@ -63,9 +75,18 @@ class NativeSocketManager(private val baseUrl: String) {
             
             socket?.on("room_count") { args ->
                 try {
-                    val count = args[0] as Int
+                    val raw = args[0]
+                    val count = when (raw) {
+                        is Int -> raw
+                        is Long -> raw.toInt()
+                        is Double -> raw.toInt()
+                        is String -> raw.toIntOrNull() ?: 0
+                        else -> 0
+                    }
                     _onlineUsers.value = count
-                } catch (e: Exception) {}
+                } catch (e: Exception) {
+                    Log.e("NativeSocket", "Error parsing room_count", e)
+                }
             }
 
             socket?.connect()
@@ -75,6 +96,9 @@ class NativeSocketManager(private val baseUrl: String) {
     }
 
     fun joinFrequency(frequency: String, userId: String?) {
+        lastFrequency = frequency
+        lastUserId = userId
+        
         val joinData = JSONObject()
         joinData.put("frequency", frequency)
         joinData.put("userId", userId)

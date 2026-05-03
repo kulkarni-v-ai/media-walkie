@@ -131,6 +131,15 @@ class AudioEngine(private val context: Context) {
                                 else it + ByteArray(20 - it.size)
                             }
                             packet.write(nameBytes)
+                            // APPLY SOFTWARE GAIN (2.0x) to boost quiet mics
+                            for (i in audioData.indices step 2) {
+                                var sample = (audioData[i].toInt() and 0xFF) or (audioData[i+1].toInt() shl 8)
+                                if (sample > 32767) sample -= 65536
+                                sample = (sample * 2.0).toInt().coerceIn(-32768, 32767)
+                                audioData[i] = (sample and 0xFF).toByte()
+                                audioData[i+1] = (sample shr 8).toByte()
+                            }
+
                             packet.write(audioData)
                             
                             val finalPayload = packet.toByteArray()
@@ -167,7 +176,7 @@ class AudioEngine(private val context: Context) {
                 .setAudioAttributes(
                     android.media.AudioAttributes.Builder()
                         .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )
                 .setAudioFormat(
@@ -188,8 +197,13 @@ class AudioEngine(private val context: Context) {
             Thread {
                 val PREFETCH_COUNT = 3
                 while (isPlaying) {
-                    if (jitterBuffer.size < PREFETCH_COUNT) {
-                        // Wait for buffer to fill to avoid jitter/clicking
+                    if (jitterBuffer.isEmpty()) {
+                        Thread.sleep(10)
+                        continue
+                    }
+                    
+                    // Start playing only when we have a small cushion
+                    if (jitterBuffer.size < 2 && processedPacketIds.size > 5) {
                         Thread.sleep(20)
                         continue
                     }
@@ -254,7 +268,7 @@ class AudioEngine(private val context: Context) {
 
             val audioData = payload.copyOfRange(HEADER_SIZE, payload.size)
             jitterBuffer.offer(audioData)
-            if (jitterBuffer.size > 16) jitterBuffer.poll() // Increased to 16 for better jitter handling
+            if (jitterBuffer.size > 8) jitterBuffer.poll() 
         } catch (e: Exception) {
             Log.e(TAG, "Error processing incoming packet", e)
         }

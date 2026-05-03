@@ -32,6 +32,9 @@ class RoutingManager(private val context: Context, private val repository: Walki
 
     private var wakeLock: android.os.PowerManager.WakeLock? = null
     private var wifiLock: android.net.wifi.WifiManager.WifiLock? = null
+    
+    // Deduplication cache for mesh relaying
+    private val processedPayloads = java.util.Collections.synchronizedSet(java.util.LinkedHashSet<Int>())
 
     init {
         try {
@@ -39,14 +42,25 @@ class RoutingManager(private val context: Context, private val repository: Walki
             
             // Wire up MeshManager callbacks
             meshManager.onPayloadReceived = { payload ->
-                Log.d(TAG, "Received payload from Mesh. Playing and Relaying...")
-                audioEngine.queueAudioForPlayback(payload)
-                
-                // REPEATER: Relay Mesh audio to Internet for global reach
-                if (isInternetAvailable) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        repository.sendAudioData(payload)
+                val payloadHash = payload.contentHashCode()
+                if (!processedPayloads.contains(payloadHash)) {
+                    Log.d(TAG, "Received new payload from Mesh. Playing and Relaying...")
+                    
+                    // Add to cache with size limit
+                    processedPayloads.add(payloadHash)
+                    if (processedPayloads.size > 200) {
+                        processedPayloads.remove(processedPayloads.first())
                     }
+
+                    audioEngine.queueAudioForPlayback(payload)
+                    
+                    // REPEATER: Relay Mesh audio to other Mesh peers
+                    if (connectedMeshPeers > 1) {
+                        meshManager.sendAudio(payload)
+                    }
+                    
+                    // REPEATER: Relay Mesh audio to Internet for global reach
+                    nativeSocket.sendAudio(payload)
                 }
             }
 
@@ -63,26 +77,36 @@ class RoutingManager(private val context: Context, private val repository: Walki
 
             CoroutineScope(Dispatchers.Main).launch {
                 nativeSocket.audioFlow.collect { payload ->
-                    Log.d(TAG, "Received binary payload from Internet. Playing...")
-                    audioEngine.queueAudioForPlayback(payload)
-                    
-                    // REPEATER: Relay Internet audio to Mesh for local reach
-                    if (connectedMeshPeers > 0) {
+                    val payloadHash = payload.contentHashCode()
+                    if (!processedPayloads.contains(payloadHash)) {
+                        Log.d(TAG, "Received new binary payload from Internet. Playing...")
+                        
+                        processedPayloads.add(payloadHash)
+                        if (processedPayloads.size > 200) {
+                            processedPayloads.remove(processedPayloads.first())
+                        }
+
+                        audioEngine.queueAudioForPlayback(payload)
+                        
+                        // REPEATER: Relay Internet audio to Mesh for local reach
                         meshManager.sendAudio(payload)
                     }
                 }
             }
 
             audioEngine.onAudioDataCaptured = { payload ->
-                // Always try to broadcast locally
-                if (connectedMeshPeers > 0) {
-                    meshManager.sendAudio(payload)
+                // Add own audio to cache to avoid re-playing it if relayed back
+                val payloadHash = payload.contentHashCode()
+                processedPayloads.add(payloadHash)
+                if (processedPayloads.size > 200) {
+                    processedPayloads.remove(processedPayloads.first())
                 }
+
+                // Always try to broadcast locally
+                meshManager.sendAudio(payload)
                 
                 // Also broadcast globally via Native Binary Socket
-                if (isInternetAvailable) {
-                    nativeSocket.sendAudio(payload)
-                }
+                nativeSocket.sendAudio(payload)
             }
 
             audioEngine.onSpeakerChanged = { name ->
@@ -139,13 +163,19 @@ class RoutingManager(private val context: Context, private val repository: Walki
             Log.w(TAG, "Could not auto-set volume: ${e.message}")
         }
         
-        // Reset Mesh for new frequency - No delay
-        meshManager.stopAll()
-        meshManager.startAdvertising(frequency)
-        meshManager.startDiscovery(frequency)
+        // Only reset Mesh if frequency changed
+        if (activeFrequency != frequency || connectedMeshPeers == 0) {
+            Log.d(TAG, "Frequency changed or no peers. Resetting Mesh...")
+            meshManager.stopAll()
+            meshManager.startAdvertising(frequency)
+            meshManager.startDiscovery(frequency)
+        }
+        activeFrequency = frequency
 
-        // FORCE AGGRESSIVE CONNECTION: Don't wait for OS to report internet
-        nativeSocket.connect()
+        // FORCE AGGRESSIVE CONNECTION: Re-connect if disconnected
+        if (nativeSocket.connectionState.value == false) {
+            nativeSocket.connect()
+        }
         scope.launch {
             delay(1000) 
             nativeSocket.joinFrequency(frequency, userId ?: "unknown")
@@ -155,6 +185,7 @@ class RoutingManager(private val context: Context, private val repository: Walki
         // GLOBAL VOICE IGNITION: Keep hardware ready for voice at all times
         audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
         audioManager.isSpeakerphoneOn = true
+        Log.d(TAG, "Audio Mode set to IN_COMMUNICATION, Speakerphone: ${audioManager.isSpeakerphoneOn}")
 
         // ACQUIRE STABILITY LOCKS: Prevent CPU/Wifi sleep
         try {
@@ -220,23 +251,19 @@ class RoutingManager(private val context: Context, private val repository: Walki
     }
 
     fun setPttActive(active: Boolean, name: String = "User") {
-        if (isPttActive == active) return
         isPttActive = active
         audioEngine.userName = name
-        
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
         
         if (active) {
-            Log.d(TAG, "PTT Pressed - MODE: ${if (isInternetAvailable) "INTERNET" else "OFFLINE MESH"}")
-            
-            // CLASSIC HARDWARE IGNITION: Required for many phones to enable mic
+            Log.d(TAG, "PTT Pressed! Starting capture...")
             audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
             audioManager.isSpeakerphoneOn = true
-            
             audioEngine.startCapture() 
         } else {
-            Log.d(TAG, "PTT Released")
+            Log.d(TAG, "PTT Released! Stopping capture.")
             audioEngine.stopCapture()
+            audioManager.mode = android.media.AudioManager.MODE_NORMAL
         }
     }
 }
