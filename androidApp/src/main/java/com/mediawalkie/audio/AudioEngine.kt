@@ -82,7 +82,7 @@ class AudioEngine(private val context: Context) {
             Thread {
                 val buffer = ByteArray(minBufferSizeIn)
                 val chunkBuffer = java.io.ByteArrayOutputStream()
-                val TARGET_CHUNK_SIZE = 3200 // 100ms at 16kHz
+                val TARGET_CHUNK_SIZE = 1600 // 50ms at 16kHz - low latency
 
                 while (isRecording) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0

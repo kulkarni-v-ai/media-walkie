@@ -118,13 +118,10 @@ class RoutingManager(private val context: Context, private val repository: Walki
         // Ensure engines are ready
         audioEngine.startPlayback()
         
-        // Reset and Start Mesh with safety delay to avoid Bluetooth collision
+        // Reset Mesh for new frequency - No delay, just like working APK
         meshManager.stopAll()
         meshManager.startAdvertising(frequency)
-        scope.launch {
-            delay(1500) 
-            meshManager.startDiscovery(frequency)
-        }
+        meshManager.startDiscovery(frequency)
 
         if (isInternetAvailable) {
             repository.connect()
@@ -179,19 +176,27 @@ class RoutingManager(private val context: Context, private val repository: Walki
         isPttActive = active
         audioEngine.userName = name
         
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        
         if (active) {
             Log.d(TAG, "PTT Pressed - MODE: ${if (isInternetAvailable) "INTERNET" else "OFFLINE MESH"}")
-            // Capture audio normally like the original version
+            
+            // CLASSIC HARDWARE IGNITION: Required for many phones to enable mic
+            audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
+            audioManager.isSpeakerphoneOn = true
+            
             audioEngine.startCapture() 
 
             if (isInternetAvailable) {
-                // Professional WebRTC call start if needed
                 webRTCHandler?.startCall()
             }
         } else {
             Log.d(TAG, "PTT Released")
             audioEngine.stopCapture()
             webRTCHandler?.stopCall()
+            
+            // RESET HARDWARE
+            audioManager.mode = android.media.AudioManager.MODE_NORMAL
         }
     }
 }
