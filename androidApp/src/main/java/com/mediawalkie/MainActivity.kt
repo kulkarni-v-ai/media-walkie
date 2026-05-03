@@ -23,9 +23,10 @@ import com.mediawalkie.ui.theme.MediaWalkieTheme
 
 class MainActivity : ComponentActivity() {
 
-    private var routingManager: RoutingManager? = null
-    private val repository by lazy { com.mediawalkie.network.WalkieRepository() }
-    private val sessionManager by lazy { SessionManager(this) }
+    private val app by lazy { application as WalkieApplication }
+    private val routingManager get() = app.routingManager
+    private val repository get() = app.repository
+    private val sessionManager get() = app.sessionManager
     private val walkieApi by lazy { WalkieApi.create() }
 
     @OptIn(ExperimentalPermissionsApi::class)

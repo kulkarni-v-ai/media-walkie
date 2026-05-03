@@ -190,7 +190,7 @@ class AudioEngine(private val context: Context) {
                 while (isPlaying) {
                     if (jitterBuffer.size < PREFETCH_COUNT) {
                         // Wait for buffer to fill to avoid jitter/clicking
-                        delay(20)
+                        Thread.sleep(20)
                         continue
                     }
                     
