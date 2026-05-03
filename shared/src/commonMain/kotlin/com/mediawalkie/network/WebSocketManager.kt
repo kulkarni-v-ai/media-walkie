@@ -34,10 +34,20 @@ class WebSocketManager(
                     session = this
                     _connectionState.value = true
                     
+                    // Socket.IO Handshake
+                    send(Frame.Text("40"))
+                    
                     for (frame in incoming) {
                         if (frame is Frame.Text) {
                             try {
                                 val text = frame.data.decodeToString()
+                                
+                                // Handle Ping/Pong
+                                if (text == "2") {
+                                    send(Frame.Text("3"))
+                                    continue
+                                }
+                                
                                 if (text.startsWith("42[")) {
                                     val content = text.substring(2)
                                     val element = json.parseToJsonElement(content)
@@ -48,6 +58,8 @@ class WebSocketManager(
                                         if (event == "webrtc_signal") {
                                             val signal = json.decodeFromJsonElement<WebRTCSignal>(data)
                                             _signalFlow.emit(signal)
+                                        } else if (event == "audio_data") {
+                                            // Handle legacy binary if needed
                                         }
                                         _events.emit(data)
                                     }
