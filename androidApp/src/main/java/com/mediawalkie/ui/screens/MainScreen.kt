@@ -63,6 +63,17 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     var initialLoadDone by remember { mutableStateOf(false) }
 
+    fun handleChannelSwitch(targetGroup: Group) {
+        if (!targetGroup.pin.isNullOrBlank()) {
+            showPinDialog = targetGroup
+            enteredPin = ""
+            pinError = false
+        } else {
+            frequency = targetGroup.frequency
+            routingManager?.start(frequency, userId)
+        }
+    }
+
     // Auto-start radio and FETCH GROUPS
     LaunchedEffect(frequency, userId) {
         if (userId.isNotEmpty()) {
@@ -83,17 +94,6 @@ fun MainScreen(
                 } catch (e: Exception) {}
                 initialLoadDone = true
             }
-        }
-    }
-
-    fun handleChannelSwitch(targetGroup: Group) {
-        if (!targetGroup.pin.isNullOrBlank()) {
-            showPinDialog = targetGroup
-            enteredPin = ""
-            pinError = false
-        } else {
-            frequency = targetGroup.frequency
-            routingManager?.start(frequency, userId)
         }
     }
 
