@@ -137,6 +137,40 @@ app.post('/api/groups', async (req, res) => {
   }
 });
 
+// Update a group (Admin only)
+app.put('/api/groups/:id', async (req, res) => {
+  try {
+    const { name, frequency, rangeDescription } = req.body;
+    const group = await Group.findByIdAndUpdate(
+      req.params.id,
+      { name, frequency, rangeDescription },
+      { new: true }
+    );
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+    res.status(200).json({ message: 'Group updated successfully', group });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update group' });
+  }
+});
+
+// Delete a group (Admin only)
+app.delete('/api/groups/:id', async (req, res) => {
+  try {
+    const group = await Group.findByIdAndDelete(req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+    
+    // Cleanup: Remove this group from all users
+    await User.updateMany(
+      { assignedGroups: req.params.id },
+      { $pull: { assignedGroups: req.params.id } }
+    );
+    
+    res.status(200).json({ message: 'Group deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete group' });
+  }
+});
+
 // Admin: Get all groups
 app.get('/api/admin/groups', async (req, res) => {
     try {

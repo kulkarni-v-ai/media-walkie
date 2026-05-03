@@ -114,13 +114,47 @@
             groups.forEach(g => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="color: var(--primary); font-weight: bold;">${g.name}</td>
-                    <td>${g.frequency} MHz</td>
-                    <td>${g.rangeDescription || 'Standard'}</td>
-                    <td style="font-size: 10px; color: #888;">${new Date(g.createdAt).toLocaleDateString()}</td>
+                    <td style="color: var(--primary); font-weight: bold;">
+                        <input type="text" id="edit-name-${g._id}" value="${g.name}" style="background:transparent; color: var(--primary); border:none; border-bottom: 1px solid #333; width: 100px;">
+                    </td>
+                    <td>
+                        <input type="text" id="edit-freq-${g._id}" value="${g.frequency}" style="background:transparent; color: white; border:none; border-bottom: 1px solid #333; width: 80px;"> MHz
+                    </td>
+                    <td>
+                        <input type="text" id="edit-range-${g._id}" value="${g.rangeDescription || ''}" style="background:transparent; color: #888; border:none; border-bottom: 1px solid #333; width: 120px;">
+                    </td>
+                    <td>
+                        <button onclick="updateGroup('${g._id}')">SAVE</button>
+                        <button onclick="deleteGroup('${g._id}')" style="background: var(--danger); margin-left: 5px;">DEL</button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        async function updateGroup(id) {
+            const name = document.getElementById(`edit-name-${id}`).value;
+            const frequency = document.getElementById(`edit-freq-${id}`).value;
+            const rangeDescription = document.getElementById(`edit-range-${id}`).value;
+
+            const res = await fetch(`/api/groups/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, frequency, rangeDescription })
+            });
+            if (res.ok) {
+                alert("Channel updated!");
+                loadData();
+            }
+        }
+
+        async function deleteGroup(id) {
+            if (!confirm("Are you sure? This will remove the channel from all users.")) return;
+            const res = await fetch(`/api/groups/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                alert("Channel deleted!");
+                loadData();
+            }
         }
 
         function renderUsers(users) {
