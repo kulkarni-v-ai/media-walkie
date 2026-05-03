@@ -72,20 +72,14 @@ class MainActivity : ComponentActivity() {
                         
                         val permissionState = com.google.accompanist.permissions.rememberMultiplePermissionsState(permissionsToRequest)
                         
-                        // Initialize RoutingManager ONLY once permissions are handled
-                        LaunchedEffect(Unit) {
-                            if (routingManager == null) {
-                                try {
-                                    routingManager = RoutingManager(this@MainActivity, repository)
-                                } catch (e: Exception) {
-                                    Log.e("MainActivity", "Failed to init RoutingManager", e)
-                                }
-                            }
-                        }
-
+                        // Single source of truth for startup
                         LaunchedEffect(permissionState.allPermissionsGranted, userId) {
                             if (permissionState.allPermissionsGranted && userId?.isNotEmpty() == true) {
                                 try {
+                                    if (routingManager == null) {
+                                        routingManager = RoutingManager(this@MainActivity, repository)
+                                    }
+                                    
                                     routingManager?.start("104.5", userId)
                                     
                                     val serviceIntent = Intent(this@MainActivity, WalkieService::class.java).apply {
@@ -99,7 +93,7 @@ class MainActivity : ComponentActivity() {
                                         startService(serviceIntent)
                                     }
                                 } catch (e: Exception) {
-                                    Log.e("MainActivity", "Failed to start services", e)
+                                    Log.e("MainActivity", "Unified startup failed", e)
                                 }
                             } else if (!permissionState.allPermissionsGranted) {
                                 permissionState.launchMultiplePermissionRequest()

@@ -83,21 +83,24 @@ class RoutingManager(private val context: Context, private val repository: Walki
     }
 
     fun start(frequency: String, userId: String? = null) {
+        Log.d(TAG, "Starting RoutingManager for frequency: $frequency")
         activeFrequency = frequency
-        audioEngine.startPlayback() 
         
-        checkInternet()
+        // Ensure engines are ready
+        audioEngine.startPlayback()
         
+        // Reset Mesh for new frequency
+        meshManager.stopAll()
         meshManager.startAdvertising(frequency)
         meshManager.startDiscovery(frequency)
 
+        checkInternet()
         if (isInternetAvailable) {
             repository.connect()
             scope.launch {
+                delay(1000) // Small delay to ensure WebSocket is ready
                 repository.joinChannel(frequency, userId)
             }
-    // legacyWebRTCEngine.initialize()
-    // legacyWebRTCEngine.connectToSignalingServer("...", frequency, userId)
         }
     }
 
@@ -117,6 +120,7 @@ class RoutingManager(private val context: Context, private val repository: Walki
         }
     }
 
+
     fun stop() {
         audioEngine.stopPlayback()
         audioEngine.stopCapture()
@@ -126,19 +130,24 @@ class RoutingManager(private val context: Context, private val repository: Walki
     }
 
     fun setPttActive(active: Boolean, name: String = "User") {
+        if (isPttActive == active) return
         isPttActive = active
         audioEngine.userName = name
+        
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
         
         if (active) {
+            Log.d(TAG, "PTT Pressed - Starting Transmission")
             audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
             audioManager.isSpeakerphoneOn = true
             
-            audioEngine.startCapture() // For Mesh
+            // Start both engines for maximum reach
+            audioEngine.startCapture() 
             if (isInternetAvailable) {
-                webRTCHandler?.startCall() // For Professional WebRTC
+                webRTCHandler?.startCall()
             }
         } else {
+            Log.d(TAG, "PTT Released - Stopping Transmission")
             audioEngine.stopCapture()
             webRTCHandler?.stopCall()
             audioManager.mode = android.media.AudioManager.MODE_NORMAL
