@@ -143,12 +143,12 @@ class RoutingManager(private val context: Context, private val repository: Walki
         meshManager.startAdvertising(frequency)
         meshManager.startDiscovery(frequency)
 
-        if (isInternetAvailable) {
-            nativeSocket.connect()
-            scope.launch {
-                delay(1000) 
-                nativeSocket.joinFrequency(frequency, userId ?: "unknown")
-            }
+        // FORCE AGGRESSIVE CONNECTION: Don't wait for OS to report internet
+        nativeSocket.connect()
+        scope.launch {
+            delay(1000) 
+            nativeSocket.joinFrequency(frequency, userId ?: "unknown")
+            Log.d(TAG, "Aggressively joined frequency: $frequency")
         }
 
         // GLOBAL VOICE IGNITION: Keep hardware ready for voice at all times
