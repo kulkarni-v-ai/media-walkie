@@ -225,15 +225,25 @@ io.on('connection', (socket) => {
         }
 
         // Access Control: Verify if user is allowed to join this frequency
-        if (userId) {
-            const user = await User.findById(userId).populate('assignedGroups');
-            if (user && !user.isAdmin) {
-                const hasAccess = user.assignedGroups.some(g => g.frequency === frequency);
-                if (!hasAccess) {
-                    console.log(`Access Denied: User ${userId} tried to join frequency ${frequency}`);
-                    socket.emit('error', 'You do not have access to this channel.');
-                    return;
-                }
+        if (!userId || userId === 'unknown') {
+            console.log(`Access Denied: Missing or unknown userId for frequency ${frequency}`);
+            socket.emit('error', 'Authentication required to join this channel.');
+            return;
+        }
+
+        const user = await User.findById(userId).populate('assignedGroups');
+        if (!user) {
+            console.log(`Access Denied: User ${userId} not found`);
+            socket.emit('error', 'User not found. Please register.');
+            return;
+        }
+
+        if (!user.isAdmin) {
+            const hasAccess = user.assignedGroups.some(g => g.frequency === frequency);
+            if (!hasAccess) {
+                console.log(`Access Denied: User ${user.name} (${userId}) tried to join unauthorized frequency ${frequency}`);
+                socket.emit('error', `You do not have permission to join channel ${frequency}.`);
+                return;
             }
         }
 

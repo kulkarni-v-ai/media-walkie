@@ -104,6 +104,15 @@ class RoutingManager(private val context: Context, private val repository: Walki
         }
     }
 
+    fun restart(frequency: String, userId: String? = null) {
+        Log.d(TAG, "RESTARTING RADIO ENGINE for $frequency")
+        stop()
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(500) // Cooling period
+            start(frequency, userId)
+        }
+    }
+
     fun start(frequency: String, userId: String? = null) {
         Log.d(TAG, "Starting RoutingManager for frequency: $frequency")
         activeFrequency = frequency

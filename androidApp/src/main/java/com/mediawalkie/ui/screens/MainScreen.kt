@@ -1,267 +1,278 @@
 package com.mediawalkie.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.TextButton
 import com.mediawalkie.data.api.Group
-import com.mediawalkie.data.api.GroupRequest
 import com.mediawalkie.data.api.WalkieApi
 import com.mediawalkie.routing.RoutingManager
-import com.mediawalkie.ui.theme.PrimaryVibrant
-import androidx.compose.material3.ExperimentalMaterial3Api
+import com.mediawalkie.ui.theme.*
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unknown", api: WalkieApi? = null, userId: String = "") {
+fun MainScreen(
+    routingManager: RoutingManager? = null, 
+    userName: String = "User", 
+    userId: String = "",
+    api: WalkieApi? = null
+) {
     var isPressed by remember { mutableStateOf(false) }
     var frequency by remember { mutableStateOf("104.5") }
     var groups by remember { mutableStateOf<List<Group>>(emptyList()) }
-    var showGroupsDialog by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    
+    // UI State for the profile fields
+    var nameInput by remember { mutableStateOf(userName) }
+    var emailInput by remember { mutableStateOf("") }
+    var phoneInput by remember { mutableStateOf("") }
 
-    // Fetch groups on load
-    LaunchedEffect(userId) {
-        try {
-            if (api != null && userId.isNotEmpty()) {
-                groups = api.getGroups(userId)
-            }
-        } catch (e: Exception) {
-            // Ignore error for now
+    // Auto-start radio and FETCH GROUPS
+    LaunchedEffect(frequency, userId) {
+        if (userId.isNotEmpty()) {
+            routingManager?.start(frequency, userId)
+            try {
+                if (api != null) {
+                    groups = api.getGroups(userId)
+                }
+            } catch (e: Exception) {}
         }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
+            .background(BackgroundOLED)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Top Status Bar
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Welcome, $userName",
-                color = PrimaryVibrant,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(SuccessGreen)
+                    .shadow(4.dp, CircleShape)
             )
-            
-            // Speaker Indicator
-            val activeSpeaker = routingManager?.currentSpeaker
-            if (activeSpeaker != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(Color.Red)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "ONLINE",
+                color = TextGray,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = { 
+                routingManager?.restart(frequency, userId)
+            }) {
+                Text("RESTART", color = GoldPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // App Title
+        Text(
+            text = "MEDIA WALKIE",
+            color = GoldPrimary,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 4.sp,
+            fontFamily = FontFamily.SansSerif,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(Modifier.height(32.dp))
+
+        // Frequency Card (The Glow Card)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(32.dp))
+                .background(SurfaceCard, RoundedCornerShape(32.dp))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "CHANNEL",
+                    color = TextGray,
+                    fontSize = 14.sp,
+                    letterSpacing = 4.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = frequency,
+                        color = GoldPrimary,
+                        fontSize = 72.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-2).sp,
+                        style = TextStyle(
+                            shadow = androidx.compose.ui.graphics.Shadow(
+                                color = GoldGlow.copy(alpha = 0.5f),
+                                blurRadius = 30f
+                            )
+                        )
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "$activeSpeaker is talking...",
-                        color = Color.Red,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
+                        text = "MHz",
+                        color = TextGray,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 12.dp)
                     )
                 }
             }
         }
 
-        // Frequency Tuner UI
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "FREQUENCY / GROUP",
-                color = Color.Gray,
-                fontSize = 14.sp,
-                letterSpacing = 2.sp
-            )
-            
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.pointerInput(Unit) {
-                    detectTapGestures(onTap = { showGroupsDialog = true })
-                }
-            ) {
-                Text(
-                    text = frequency,
-                    color = PrimaryVibrant,
-                    fontSize = 64.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "Select Group", tint = PrimaryVibrant)
+        Spacer(Modifier.height(32.dp))
+        Divider(color = GoldPrimary.copy(alpha = 0.5f), thickness = 1.dp)
+        Spacer(Modifier.height(32.dp))
+
+        // Profile / Registration Section (Minimalist Underline style)
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                ProfileField("Your Name", nameInput, Modifier.weight(1f)) { nameInput = it }
+                ProfileField("Email Address", emailInput, Modifier.weight(1f)) { emailInput = it }
             }
-            Text(
-                text = "MHz",
-                color = Color.Gray,
-                fontSize = 18.sp
-            )
-        }
-
-        if (showGroupsDialog) {
-            var showAddDialog by remember { mutableStateOf(false) }
-            var newName by remember { mutableStateOf("") }
-            var newFreq by remember { mutableStateOf("") }
-
-            AlertDialog(
-                onDismissRequest = { showGroupsDialog = false },
-                title = { 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Select Channel")
-                        Spacer(Modifier.weight(1f))
-                        TextButton(onClick = { showAddDialog = true }) {
-                            Icon(Icons.Default.Add, "Add")
-                            Text("New")
-                        }
-                    }
-                },
-                text = {
-                    Column {
-                        if (showAddDialog) {
-                            Column(Modifier.padding(bottom = 16.dp)) {
-                                androidx.compose.material3.OutlinedTextField(
-                                    value = newName,
-                                    onValueChange = { newName = it },
-                                    label = { Text("Channel Name") },
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                androidx.compose.material3.OutlinedTextField(
-                                    value = newFreq,
-                                    onValueChange = { newFreq = it },
-                                    label = { Text("Frequency (MHz)") },
-                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                                )
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                    TextButton(onClick = { showAddDialog = false }) { Text("Cancel") }
-                                    TextButton(onClick = {
-                                        if (newName.isNotBlank() && newFreq.isNotBlank()) {
-                                            scope.launch {
-                                                try {
-                                                    api?.createGroup(GroupRequest(newName, newFreq))
-                                                    groups = api?.getGroups(userId) ?: emptyList()
-                                                    showAddDialog = false
-                                                } catch (e: Exception) {}
-                                            }
-                                        }
-                                    }) { Text("Create") }
-                                }
-                                androidx.compose.material3.Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.Gray.copy(alpha = 0.2f))
-                            }
-                        }
-
-                        LazyColumn {
-                            item {
-                                TextButton(onClick = { 
-                                    frequency = "104.5"
-                                    routingManager?.start(frequency, userId)
-                                    showGroupsDialog = false
-                                }) { Text("Default (104.5 MHz)") }
-                            }
-                            item {
-                                TextButton(onClick = { 
-                                    frequency = "None"
-                                    routingManager?.stop()
-                                    showGroupsDialog = false
-                                }) { 
-                                    Text("None (Muted)", color = Color.Red) 
-                                }
-                            }
-                            items(groups) { group ->
-                                TextButton(onClick = { 
-                                    frequency = group.frequency
-                                    routingManager?.start(frequency, userId)
-                                    showGroupsDialog = false
-                                }) {
-                                    Text("${group.name} (${group.frequency} MHz)")
-                                }
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showGroupsDialog = false }) { Text("Close") }
+            Spacer(Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                ProfileField("Phone Number", phoneInput, Modifier.weight(1f)) { phoneInput = it }
+                Spacer(Modifier.width(16.dp))
+                TextButton(
+                    onClick = { /* Login Logic */ },
+                    modifier = Modifier.background(Color.White, RoundedCornerShape(4.dp))
+                ) {
+                    Text("REGISTER / LOGIN", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
-            )
+            }
         }
 
-        // PTT Button
+        Spacer(Modifier.weight(1f))
+
+        // PTT Button (Big Circle)
         Box(
             modifier = Modifier
-                .size(200.dp)
+                .size(220.dp)
+                .border(8.dp, if (isPressed) GoldPrimary else SurfaceCard, CircleShape)
+                .padding(8.dp)
                 .clip(CircleShape)
-                .background(if (isPressed) PrimaryVibrant else MaterialTheme.colorScheme.surface)
+                .background(if (isPressed) GoldPrimary.copy(alpha = 0.2f) else BackgroundOLED)
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onPress = {
                             isPressed = true
-                            routingManager?.setPttActive(true, userName)
+                            routingManager?.setPttActive(true, nameInput)
                             tryAwaitRelease()
                             isPressed = false
-                            routingManager?.setPttActive(false, userName)
+                            routingManager?.setPttActive(false, nameInput)
                         }
                     )
                 },
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = if (isPressed) "TRANSMITTING" else "PUSH TO TALK",
-                color = if (isPressed) Color.Black else Color.White,
+                text = "HOLD TO TALK",
+                color = if (isPressed) GoldPrimary else TextGray,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                fontSize = 16.sp,
+                letterSpacing = 1.sp
             )
         }
 
-        // Network Status
-        val offlinePeers = routingManager?.connectedMeshPeers ?: 0
-        val onlinePeers = routingManager?.connectedOnlineUsers ?: 0
-        val totalPeers = offlinePeers + onlinePeers
+        Spacer(Modifier.height(32.dp))
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = if (totalPeers > 0) "STATUS: ACTIVE" else "STATUS: SCANNING...",
-                    color = if (totalPeers > 0) Color(0xFF4CAF50) else Color.Gray,
-                    fontSize = 12.sp,
-                    letterSpacing = 1.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.width(16.dp))
-                TextButton(onClick = { 
+        // Bottom Dynamic Channel Dock
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            contentPadding = PaddingValues(horizontal = 12.dp)
+        ) {
+            item {
+                ChannelButton("DEF") { 
+                    frequency = "104.5" 
                     routingManager?.start(frequency, userId)
-                }) {
-                    Text("RESTART RADIO", fontSize = 10.sp)
                 }
+                Spacer(Modifier.width(12.dp))
             }
-            Text(
-                text = "($offlinePeers MESH | $onlinePeers ONLINE)",
-                color = Color.Gray.copy(alpha = 0.7f),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-            )
+            
+            items(groups) { group ->
+                ChannelButton(group.name.take(3).uppercase()) { 
+                    frequency = group.frequency 
+                    routingManager?.start(frequency, userId)
+                }
+                Spacer(Modifier.width(12.dp))
+            }
+
+            item {
+                ChannelButton("+") { /* Add Logic or Refresh */ }
+            }
         }
     }
 }
+
+@Composable
+fun ProfileField(label: String, value: String, modifier: Modifier = Modifier, onValueChange: (String) -> Unit) {
+    Column(modifier = modifier) {
+        Text(label, color = TextGray, fontSize = 12.sp, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            textStyle = TextStyle(color = Color.White, fontSize = 16.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center),
+            cursorBrush = SolidColor(GoldPrimary),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .border(0.dp, Color.Transparent)
+                .drawBehind {
+                    val strokeWidth = 1.dp.toPx()
+                    val y = size.height - strokeWidth / 2
+                    drawLine(TextGray.copy(alpha = 0.5f), start = androidx.compose.ui.geometry.Offset(0f, y), end = androidx.compose.ui.geometry.Offset(size.width, y), strokeWidth = strokeWidth)
+                }
+        )
+    }
+}
+
+@Composable
+fun ChannelButton(label: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = SurfaceCard),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier
+            .size(width = 70.dp, height = 50.dp)
+            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        Text(text = label, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
