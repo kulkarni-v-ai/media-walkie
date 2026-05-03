@@ -16,11 +16,11 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryVibrant,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
-    background = BackgroundDark,
-    surface = SurfaceDark
+    primary = GoldPrimary,
+    secondary = GoldGlow,
+    tertiary = TextGray,
+    background = BackgroundOLED,
+    surface = SurfaceCard
 )
 
 @Composable
