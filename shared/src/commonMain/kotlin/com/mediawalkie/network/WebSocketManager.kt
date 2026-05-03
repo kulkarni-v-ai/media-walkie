@@ -24,6 +24,9 @@ class WebSocketManager(
     val events = _events.asSharedFlow()
     private val _signalFlow = MutableSharedFlow<WebRTCSignal>()
     val signalFlow = _signalFlow.asSharedFlow()
+    private val _onlineUsers = MutableStateFlow(0)
+    val onlineUsers: StateFlow<Int> = _onlineUsers
+
     private val _audioFlow = MutableSharedFlow<ByteArray>()
     val audioFlow = _audioFlow.asSharedFlow()
 
@@ -76,6 +79,10 @@ class WebSocketManager(
                                                     println("WebSocketManager: Base64 decode failed: ${e.message}")
                                                 }
                                             }
+                                        } else if (event == "room_count") {
+                                            // Update global participant count
+                                            val count = data.jsonPrimitive.intOrNull ?: 0
+                                            _onlineUsers.value = count
                                         }
                                         _events.emit(data)
                                     }

@@ -213,6 +213,10 @@ io.on('connection', (socket) => {
 
         console.log(`User ${socket.id} (User: ${userId}) joined frequency ${frequency}`);
         socket.to(frequency).emit('peer_joined', socket.id);
+        
+        // Broadcast current room count to everyone in the frequency
+        const count = frequencyRooms[frequency].length;
+        io.to(frequency).emit('room_count', count);
     } catch (err) {
         console.error("Socket join error:", err);
     }
@@ -254,7 +258,12 @@ io.on('connection', (socket) => {
       frequencyRooms[freq] = frequencyRooms[freq].filter(id => id !== socket.id);
       socket.to(freq).emit('peer_left', socket.id);
       
-      if (frequencyRooms[freq].length === 0) {
+      // Broadcast updated room count
+      if (frequencyRooms[freq]) {
+        io.to(freq).emit('room_count', frequencyRooms[freq].length);
+      }
+      
+      if (frequencyRooms[freq] && frequencyRooms[freq].length === 0) {
         delete frequencyRooms[freq];
       }
     }

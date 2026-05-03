@@ -78,6 +78,15 @@ class MainActivity : ComponentActivity() {
                         LaunchedEffect(permissionState.allPermissionsGranted, userId) {
                             if (permissionState.allPermissionsGranted && userId?.isNotEmpty() == true) {
                                 try {
+                                    // Check if Location is actually ON in system settings
+                                    val lm = getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
+                                    val isLocationEnabled = lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
+                                            lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
+                                    
+                                    if (!isLocationEnabled) {
+                                        Log.e("MainActivity", "CRITICAL: Location is OFF in system settings. Mesh will FAIL.")
+                                    }
+
                                     routingManager?.start("104.5", userId)
                                     
                                     val serviceIntent = Intent(this@MainActivity, WalkieService::class.java).apply {

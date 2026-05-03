@@ -25,6 +25,8 @@ class RoutingManager(private val context: Context, private val repository: Walki
     private var isInternetAvailable = false
     var connectedMeshPeers by mutableStateOf(0)
         private set
+    var connectedOnlineUsers by mutableStateOf(0)
+        private set
     private var isPttActive = false
     var currentSpeaker by mutableStateOf<String?>(null)
         private set
@@ -51,6 +53,12 @@ class RoutingManager(private val context: Context, private val repository: Walki
             }
 
             // Wire up WebSocket Global Audio callbacks
+            CoroutineScope(Dispatchers.IO).launch {
+                repository.onlineUsers.collect { count ->
+                    connectedOnlineUsers = count
+                }
+            }
+
             CoroutineScope(Dispatchers.IO).launch {
                 repository.audioFlow.collect { payload ->
                     Log.d(TAG, "Received global payload from Internet. Playing and Relaying...")
@@ -118,12 +126,25 @@ class RoutingManager(private val context: Context, private val repository: Walki
             meshManager.startDiscovery(frequency)
         }
 
-        checkInternet()
         if (isInternetAvailable) {
             repository.connect()
             scope.launch {
                 delay(1000) // Small delay to ensure WebSocket is ready
                 repository.joinChannel(frequency, userId)
+            }
+        }
+
+        // PERSISTENT MESH RETRY: If no peers, restart scan every 15s
+        scope.launch {
+            while (isActive) {
+                delay(15000)
+                if (connectedMeshPeers == 0) {
+                    Log.d(TAG, "No peers found yet. Refreshing Mesh Radar for $activeFrequency...")
+                    meshManager.stopAll()
+                    meshManager.startAdvertising(activeFrequency)
+                    delay(2000)
+                    meshManager.startDiscovery(activeFrequency)
+                }
             }
         }
     }

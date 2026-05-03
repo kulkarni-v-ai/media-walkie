@@ -28,6 +28,7 @@ class WalkieRepository(
     val connectionState: StateFlow<Boolean> = webSocketManager.connectionState
     val audioFlow = webSocketManager.audioFlow
     val signalFlow = webSocketManager.signalFlow
+    val onlineUsers = webSocketManager.onlineUsers
 
     fun connect() {
         webSocketManager.connect()

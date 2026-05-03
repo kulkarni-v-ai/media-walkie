@@ -67,14 +67,14 @@ class MeshManager(private val context: Context) {
 
     private val endpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-            Log.d("MeshManager", "Endpoint found: $endpointId (${info.endpointName})...")
+            Log.d("MeshManager", "Radar Spotted: $endpointId (${info.endpointName})")
             
             // Only connect if they are on the same frequency
             if (info.endpointName.startsWith("Walkie-") && info.endpointName.contains(activeFrequency)) {
-                Log.d("MeshManager", "Frequency match! Requesting connection to $endpointId")
+                Log.d("MeshManager", "MATCH! Frequency $activeFrequency matches ${info.endpointName}. Connecting...")
                 connectionsClient.requestConnection("Walkie-$activeFrequency", endpointId, connectionLifecycleCallback)
             } else {
-                Log.d("MeshManager", "Frequency mismatch. Ignoring.")
+                Log.d("MeshManager", "MISMATCH: ${info.endpointName} is not on our frequency $activeFrequency")
             }
         }
 
