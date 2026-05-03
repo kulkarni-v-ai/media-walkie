@@ -30,6 +30,9 @@ class RoutingManager(private val context: Context, private val repository: Walki
     var currentSpeaker by mutableStateOf<String?>(null)
         private set
 
+    private var wakeLock: android.os.PowerManager.WakeLock? = null
+    private var wifiLock: android.net.wifi.WifiManager.WifiLock? = null
+
     init {
         try {
             checkInternet()
@@ -153,6 +156,21 @@ class RoutingManager(private val context: Context, private val repository: Walki
         audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
         audioManager.isSpeakerphoneOn = true
 
+        // ACQUIRE STABILITY LOCKS: Prevent CPU/Wifi sleep
+        try {
+            val powerManager = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            wakeLock = powerManager.newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "MediaWalkie:AudioLock").apply {
+                acquire()
+            }
+            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+            wifiLock = wifiManager.createWifiLock(android.net.wifi.WifiManager.WIFI_MODE_FULL_HIGH_PERF, "MediaWalkie:WifiLock").apply {
+                acquire()
+            }
+            Log.d(TAG, "Stability Locks ACQUIRED")
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not acquire stability locks: ${e.message}")
+        }
+
         // PERSISTENT MESH RETRY: If no peers, restart scan every 15s
         scope.launch {
             while (isActive) {
@@ -190,6 +208,15 @@ class RoutingManager(private val context: Context, private val repository: Walki
         audioEngine.stopCapture()
         meshManager.stopAll()
         nativeSocket.disconnect()
+        
+        // RELEASE STABILITY LOCKS
+        try {
+            wakeLock?.let { if (it.isHeld) it.release() }
+            wifiLock?.let { if (it.isHeld) it.release() }
+            wakeLock = null
+            wifiLock = null
+            Log.d(TAG, "Stability Locks RELEASED")
+        } catch (e: Exception) {}
     }
 
     fun setPttActive(active: Boolean, name: String = "User") {

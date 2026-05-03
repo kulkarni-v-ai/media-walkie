@@ -151,6 +151,7 @@ class AudioEngine(private val context: Context) {
                 )
                 .setBufferSizeInBytes(trackBufferSize)
                 .setTransferMode(AudioTrack.MODE_STREAM)
+                .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
                 .build()
 
             audioTrack?.play()
@@ -163,12 +164,12 @@ class AudioEngine(private val context: Context) {
                         audioTrack?.write(buffer, 0, buffer.size)
                         
                         // Speaker status timeout
-                        if (System.currentTimeMillis() - lastSpeakerTimestamp > 1000) {
+                        if (System.currentTimeMillis() - lastSpeakerTimestamp > 1500) {
                             updateSpeaker(null)
                         }
                     } else {
                         Thread.sleep(10)
-                        if (System.currentTimeMillis() - lastSpeakerTimestamp > 500) {
+                        if (System.currentTimeMillis() - lastSpeakerTimestamp > 800) {
                             updateSpeaker(null)
                         }
                     }
@@ -218,7 +219,7 @@ class AudioEngine(private val context: Context) {
 
             val audioData = payload.copyOfRange(HEADER_SIZE, payload.size)
             jitterBuffer.offer(audioData)
-            if (jitterBuffer.size > 8) jitterBuffer.poll()
+            if (jitterBuffer.size > 16) jitterBuffer.poll() // Increased to 16 for better jitter handling
         } catch (e: Exception) {
             Log.e(TAG, "Error processing incoming packet", e)
         }
