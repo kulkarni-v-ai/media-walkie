@@ -57,7 +57,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
 
     // Google Nearby Connections API
-    implementation("com.google.android.gms:play-services-nearby:19.2.2")
+    implementation("com.google.android.gms:play-services-nearby:19.0.0")
 
     // Socket.IO Client for Native Binary Support
     implementation("io.socket:socket.io-client:2.1.0")
