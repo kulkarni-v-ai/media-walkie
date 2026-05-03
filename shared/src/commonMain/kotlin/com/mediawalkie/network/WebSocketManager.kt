@@ -10,6 +10,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.*
 import kotlinx.serialization.encodeToString
+import io.ktor.util.*
 
 class WebSocketManager(
     private val client: HttpClient,
@@ -27,8 +28,11 @@ class WebSocketManager(
     val audioFlow = _audioFlow.asSharedFlow()
 
     suspend fun sendAudioData(data: ByteArray) {
-        // Socket.IO 4 Binary format: Send as a raw binary frame for classic logic compatibility
-        session?.send(Frame.Binary(true, data))
+        // Socket.IO 4 format for binary: 42["audio_data", "base64_string"]
+        // This is the most compatible way for Ktor to talk to Socket.IO
+        val base64 = data.toBase64()
+        val packet = "42" + json.encodeToString(listOf("audio_data", base64))
+        session?.send(Frame.Text(packet))
     }
 
     fun connect() {
@@ -65,9 +69,12 @@ class WebSocketManager(
                                         } else if (event == "audio_data") {
                                             // Classic Global Audio Logic
                                             if (data is JsonPrimitive && data.isString) {
-                                                // If server sends as Base64 string
-                                                // val bytes = data.content.decodeBase64Bytes()
-                                                // _audioFlow.emit(bytes)
+                                                try {
+                                                    val bytes = data.content.decodeBase64Bytes()
+                                                    _audioFlow.emit(bytes)
+                                                } catch (e: Exception) {
+                                                    println("WebSocketManager: Base64 decode failed: ${e.message}")
+                                                }
                                             }
                                         }
                                         _events.emit(data)
