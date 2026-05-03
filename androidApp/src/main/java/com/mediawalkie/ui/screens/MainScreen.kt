@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.drawBehind
 import com.mediawalkie.data.api.Group
 import com.mediawalkie.data.api.WalkieApi
 import com.mediawalkie.routing.RoutingManager
@@ -42,7 +43,7 @@ fun MainScreen(
     
     // UI State for the profile fields
     var nameInput by remember { mutableStateOf(userName) }
-    var emailInput by remember { mutableStateOf("") }
+    var pinInput by remember { mutableStateOf("") }
     var phoneInput by remember { mutableStateOf("") }
 
     // Auto-start radio and FETCH GROUPS
@@ -159,12 +160,12 @@ fun MainScreen(
         // Profile / Registration Section (Minimalist Underline style)
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                ProfileField("Your Name", nameInput, Modifier.weight(1f)) { nameInput = it }
-                ProfileField("Email Address", emailInput, Modifier.weight(1f)) { emailInput = it }
+                ProfileField("Callsign Number", nameInput, Modifier.weight(1f)) { nameInput = it }
+                ProfileField("Phone Number", phoneInput, Modifier.weight(1f)) { phoneInput = it }
             }
             Spacer(Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                ProfileField("Phone Number", phoneInput, Modifier.weight(1f)) { phoneInput = it }
+                ProfileField("Security PIN", pinInput, Modifier.weight(1f)) { pinInput = it }
                 Spacer(Modifier.width(16.dp))
                 TextButton(
                     onClick = { /* Login Logic */ },
