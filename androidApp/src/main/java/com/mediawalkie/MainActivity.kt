@@ -37,9 +37,6 @@ class MainActivity : ComponentActivity() {
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             Log.e("CRASH_BUSTER", "Fatal crash on thread ${thread.name}", throwable)
         }
-
-        // Initialize early to match working APK logic
-        routingManager = RoutingManager(this, repository)
         
         setContent {
             MediaWalkieTheme {
