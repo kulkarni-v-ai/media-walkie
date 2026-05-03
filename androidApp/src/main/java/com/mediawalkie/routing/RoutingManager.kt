@@ -35,8 +35,15 @@ class RoutingManager(private val context: Context, private val repository: Walki
             
             // Wire up MeshManager callbacks
             meshManager.onPayloadReceived = { payload ->
-                Log.d(TAG, "Received payload from Mesh. Playing...")
+                Log.d(TAG, "Received payload from Mesh. Playing and Relaying...")
                 audioEngine.queueAudioForPlayback(payload)
+                
+                // REPEATER: Relay Mesh audio to Internet for global reach
+                if (isInternetAvailable) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        repository.sendAudioData(payload)
+                    }
+                }
             }
 
             meshManager.onPeerCountChanged = { count ->
@@ -46,18 +53,23 @@ class RoutingManager(private val context: Context, private val repository: Walki
             // Wire up WebSocket Global Audio callbacks
             CoroutineScope(Dispatchers.IO).launch {
                 repository.audioFlow.collect { payload ->
-                    Log.d(TAG, "Received global payload from Internet. Playing...")
+                    Log.d(TAG, "Received global payload from Internet. Playing and Relaying...")
                     audioEngine.queueAudioForPlayback(payload)
+                    
+                    // REPEATER: Relay Internet audio to Mesh for local reach
+                    if (connectedMeshPeers > 0) {
+                        meshManager.sendAudio(payload)
+                    }
                 }
             }
 
             audioEngine.onAudioDataCaptured = { payload ->
-                // Always send to Mesh
+                // Always try to broadcast locally
                 if (connectedMeshPeers > 0) {
                     meshManager.sendAudio(payload)
                 }
                 
-                // Also send to Internet if available
+                // Also broadcast globally if possible
                 if (isInternetAvailable) {
                     CoroutineScope(Dispatchers.IO).launch {
                         repository.sendAudioData(payload)
@@ -98,10 +110,13 @@ class RoutingManager(private val context: Context, private val repository: Walki
         // Ensure engines are ready
         audioEngine.startPlayback()
         
-        // Reset Mesh for new frequency
+        // Reset and Start Mesh with safety delay to avoid Bluetooth collision
         meshManager.stopAll()
         meshManager.startAdvertising(frequency)
-        meshManager.startDiscovery(frequency)
+        scope.launch {
+            delay(1500) 
+            meshManager.startDiscovery(frequency)
+        }
 
         checkInternet()
         if (isInternetAvailable) {

@@ -77,11 +77,10 @@ class MeshManager(private val context: Context) {
             Log.d("MeshManager", "Endpoint found: $endpointId (${info.endpointName})...")
             
             // Only connect if they are on the same frequency
-            if (info.endpointName.startsWith("Walkie-") && info.endpointName.contains(activeFrequency)) {
+            if (info.endpointName.startsWith("Walkie-", ignoreCase = true) && info.endpointName.contains(activeFrequency)) {
                 Log.d("MeshManager", "Frequency match! Requesting connection to $endpointId")
                 connectionsClient?.requestConnection("Walkie-$activeFrequency", endpointId, connectionLifecycleCallback)
-            } else {
-                Log.d("MeshManager", "Frequency mismatch. Ignoring.")
+                    ?.addOnFailureListener { Log.e("MeshManager", "Request connection failed", it) }
             }
         }
 
