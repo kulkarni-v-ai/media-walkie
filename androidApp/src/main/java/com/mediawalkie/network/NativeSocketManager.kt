@@ -43,11 +43,11 @@ class NativeSocketManager(private val baseUrl: String) {
                 _connectionState.value = false
             }
 
-            socket?.on(Socket.EVENT_RECONNECT_ATTEMPT) {
-                Log.d("NativeSocket", "Reconnection attempt #$it")
+            socket?.on("reconnect_attempt") {
+                Log.d("NativeSocket", "Reconnection attempt #${it[0]}")
             }
 
-            socket?.on(Socket.EVENT_CONNECT_ERROR) {
+            socket?.on("connect_error") {
                 Log.e("NativeSocket", "Connection Error: ${it[0]}")
             }
 
