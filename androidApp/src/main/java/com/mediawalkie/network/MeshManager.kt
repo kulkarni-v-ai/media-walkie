@@ -65,39 +65,20 @@ class MeshManager(private val context: Context) {
 
     private var activeFrequency: String = ""
 
-    private val endpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
-        override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-            val endpointName = info.endpointName ?: "Unknown"
-            Log.d(TAG, "Radar Pulse: Spotted node $endpointId ($endpointName)")
-            
-            // Normalize and Check
-            val normalizedName = endpointName.trim()
-            val normalizedFreq = activeFrequency.trim()
-            
-            if (normalizedName.startsWith("Walkie-") && normalizedName.contains(normalizedFreq)) {
-                Log.d(TAG, "MATCH! Frequency $normalizedFreq matches $normalizedName. Initiating link...")
-                connectionsClient.requestConnection("Walkie-$normalizedFreq", endpointId, connectionLifecycleCallback)
-            } else {
-                Log.d(TAG, "SKIP: $normalizedName is not on frequency $normalizedFreq")
-            }
-        }
-
-        override fun onEndpointLost(endpointId: String) {
-            Log.d("MeshManager", "Endpoint lost: $endpointId")
-        }
-    }
+    private val deviceName = "Walkie-${(1000..9999).random()}"
 
     fun startAdvertising(frequency: String) {
         activeFrequency = frequency
         connectionsClient.stopAdvertising()
         val options = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
+        
         connectionsClient.startAdvertising(
             "Walkie-$frequency",
             SERVICE_ID,
             connectionLifecycleCallback,
             options
         ).addOnSuccessListener {
-            Log.d("MeshManager", "Started advertising Walkie-$frequency on $SERVICE_ID")
+            Log.d("MeshManager", "Started advertising as $advertisingName on $SERVICE_ID")
         }.addOnFailureListener {
             Log.e("MeshManager", "Failed to start advertising", it)
         }
@@ -109,7 +90,22 @@ class MeshManager(private val context: Context) {
         val options = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
         connectionsClient.startDiscovery(
             SERVICE_ID,
-            endpointDiscoveryCallback,
+            object : EndpointDiscoveryCallback() {
+                override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
+                    val endpointName = info.endpointName ?: "Unknown"
+                    Log.d(TAG, "Radar Pulse: Spotted node $endpointId ($endpointName)")
+                    if (info.endpointName.startsWith("Walkie-") && info.endpointName.contains(activeFrequency)) {
+                        Log.d("MeshManager", "MATCH! Frequency $activeFrequency matches ${info.endpointName}. Connecting...")
+                        connectionsClient.requestConnection("Walkie-$activeFrequency", endpointId, connectionLifecycleCallback)
+                    } else {
+                        Log.d("MeshManager", "MISMATCH: ${info.endpointName} is not on our frequency $activeFrequency")
+                    }
+                }
+
+                override fun onEndpointLost(endpointId: String) {
+                    Log.d("MeshManager", "Endpoint lost: $endpointId")
+                }
+            },
             options
         ).addOnSuccessListener {
             Log.d("MeshManager", "Started discovery on $SERVICE_ID")

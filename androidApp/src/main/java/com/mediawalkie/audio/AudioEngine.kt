@@ -126,7 +126,7 @@ class AudioEngine(private val context: Context) {
                             packet.write(seqBytes)
                             
                             // Name: Padded to 20 bytes
-                            val nameBytes = userName.toByteArray().let {
+                            val nameBytes = userName.toByteArray(Charsets.UTF_8).let {
                                 if (it.size > 20) it.copyOfRange(0, 20)
                                 else it + ByteArray(20 - it.size)
                             }
@@ -262,7 +262,7 @@ class AudioEngine(private val context: Context) {
             if (senderId == deviceId) return
 
             // 3. Extract Name
-            val senderName = String(payload.copyOfRange(12, 32)).trim { it <= ' ' || it == '\u0000' }
+            val senderName = String(payload.copyOfRange(12, 32), Charsets.UTF_8).trim { it <= ' ' || it == '\u0000' }
             lastSpeakerTimestamp = System.currentTimeMillis()
             updateSpeaker(senderName)
 
