@@ -237,8 +237,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // WebRTC Signaling: Offer (Legacy Support)
-  socket.on('webrtc_offer', (data) => {
 
   // Binary Audio Broadcast (The Walkie-Talkie Core)
   socket.on('audio_data', (data) => {
