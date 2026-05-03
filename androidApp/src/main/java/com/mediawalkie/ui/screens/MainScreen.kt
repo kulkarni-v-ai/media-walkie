@@ -15,9 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -62,6 +60,7 @@ fun MainScreen(
     var nameInput by remember { mutableStateOf(userName) }
     var pinInput by remember { mutableStateOf("") }
     var phoneInput by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     // Auto-start radio and FETCH GROUPS
     LaunchedEffect(frequency, userId) {
@@ -140,12 +139,13 @@ fun MainScreen(
                             modifier = Modifier
                                 .size(8.dp)
                                 .clip(CircleShape)
-                                .background(if ((routingManager?.connectedMeshPeers ?: 0) > 0) GoldPrimary else TextGray)
+                                .background(if ((routingManager?.connectedMeshPeers ?: 0) > 0) CyanPrimary else Color.Red.copy(alpha = 0.5f))
+                                .shadow(if ((routingManager?.connectedMeshPeers ?: 0) > 0) 6.dp else 0.dp, CircleShape, ambientColor = CyanPrimary, spotColor = CyanPrimary)
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = "${routingManager?.connectedMeshPeers ?: 0} MSH",
-                            color = if ((routingManager?.connectedMeshPeers ?: 0) > 0) GoldPrimary else TextGray,
+                            text = "${routingManager?.connectedMeshPeers ?: 0} MESH",
+                            color = if ((routingManager?.connectedMeshPeers ?: 0) > 0) Color.White else TextGray,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.ExtraBold
                         )
@@ -186,13 +186,27 @@ fun MainScreen(
                 // Action Cluster (Restart/Logout)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TextButton(
+                        onClick = { 
+                            scope.launch {
+                                try {
+                                    if (api != null) {
+                                        groups = api.getGroups(userId)
+                                    }
+                                } catch (e: Exception) {}
+                            }
+                        },
+                        contentPadding = PaddingValues(horizontal = 8.dp)
+                    ) {
+                        Text("SYNC", color = CyanPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                    TextButton(
                         onClick = { routingManager?.restart(frequency, userId) },
                         contentPadding = PaddingValues(horizontal = 8.dp)
                     ) {
                         Text("RST", color = GoldPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                     IconButton(onClick = onLogout) {
-                        Icon(androidx.compose.material.icons.filled.ExitToApp, "Logout", tint = Color.Red.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.ExitToApp, "Logout", tint = Color.Red.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
                     }
                 }
             }
