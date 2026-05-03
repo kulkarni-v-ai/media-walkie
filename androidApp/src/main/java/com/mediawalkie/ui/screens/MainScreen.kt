@@ -103,83 +103,96 @@ fun MainScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Status Bar (Fixed)
+            // TOP STATUS BAR (Adaptive & High-Visibility)
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Tactical Connection Status
+                // Tactical Data Cluster
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(if ((routingManager?.connectedOnlineUsers ?: 0) > 0) SuccessGreen else TextGray)
-                            .shadow(4.dp, CircleShape)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = "${routingManager?.connectedOnlineUsers ?: 0} ONLINE",
-                        color = if ((routingManager?.connectedOnlineUsers ?: 0) > 0) Color.White else TextGray,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    // ONLINE STATUS
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(if ((routingManager?.connectedOnlineUsers ?: 0) > 0) SuccessGreen else Color.Red.copy(alpha = 0.5f))
+                                .shadow(if ((routingManager?.connectedOnlineUsers ?: 0) > 0) 6.dp else 0.dp, CircleShape, ambientColor = SuccessGreen, spotColor = SuccessGreen)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "${routingManager?.connectedOnlineUsers ?: 0} ONL",
+                            color = if ((routingManager?.connectedOnlineUsers ?: 0) > 0) Color.White else TextGray,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
                     
                     Spacer(Modifier.width(12.dp))
                     
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(if ((routingManager?.connectedMeshPeers ?: 0) > 0) GoldPrimary else TextGray)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = "${routingManager?.connectedMeshPeers ?: 0} MESH",
-                        color = if ((routingManager?.connectedMeshPeers ?: 0) > 0) GoldPrimary else TextGray,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    // MESH STATUS
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(if ((routingManager?.connectedMeshPeers ?: 0) > 0) GoldPrimary else TextGray)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "${routingManager?.connectedMeshPeers ?: 0} MSH",
+                            color = if ((routingManager?.connectedMeshPeers ?: 0) > 0) GoldPrimary else TextGray,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
                 }
-                
-                // Active Speaker Indicator
+
+                // Active Speaker Indicator (Center Focus)
                 val activeSpeaker = routingManager?.currentSpeaker
                 if (activeSpeaker != null) {
-                    Spacer(Modifier.width(12.dp))
-                    Box(
+                    Row(
                         modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(Color.Red)
-                            .shadow(8.dp, CircleShape, ambientColor = Color.Red, spotColor = Color.Red)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = "$activeSpeaker",
-                        color = GoldPrimary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
+                            .weight(1f)
+                            .padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(Color.Red)
+                                .shadow(8.dp, CircleShape, ambientColor = Color.Red, spotColor = Color.Red)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = activeSpeaker.uppercase(),
+                            color = GoldPrimary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Black,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    }
+                } else {
+                    Spacer(Modifier.weight(1f))
                 }
-                
-                // Callsign Display
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    text = "|  $userName",
-                    color = TextGray.copy(alpha = 0.5f),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium
-                )
 
-                Spacer(Modifier.weight(1f))
-                TextButton(onClick = { 
-                    routingManager?.restart(frequency, userId)
-                }) {
-                    Text("RESTART", color = GoldPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-                Spacer(Modifier.width(8.dp))
-                TextButton(onClick = onLogout) {
-                    Text("LOGOUT", color = Color.Red.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                // Action Cluster (Restart/Logout)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(
+                        onClick = { routingManager?.restart(frequency, userId) },
+                        contentPadding = PaddingValues(horizontal = 8.dp)
+                    ) {
+                        Text("RST", color = GoldPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                    IconButton(onClick = onLogout) {
+                        Icon(androidx.compose.material.icons.filled.ExitToApp, "Logout", tint = Color.Red.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                    }
                 }
             }
 

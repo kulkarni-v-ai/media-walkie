@@ -26,6 +26,7 @@ class WalkieService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val frequency = intent?.getStringExtra("FREQUENCY") ?: "104.5"
+        val userId = intent?.getStringExtra("USER_ID") ?: ""
         
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -37,10 +38,11 @@ class WalkieService : Service() {
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("MediaWalkie Active")
-            .setContentText("Listening on Frequency $frequency")
+            .setContentText("Radio Frequency: $frequency MHz")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH) // Increased priority
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -49,15 +51,21 @@ class WalkieService : Service() {
             startForeground(1, notification)
         }
 
-        // TODO: Start RoutingManager and connect to frequency
+        // AGGRESSIVE BACKGROUND IGNITION
+        if (userId.isNotEmpty()) {
+            val app = application as com.mediawalkie.WalkieApplication
+            app.routingManager.start(frequency, userId)
+            Log.d("WalkieService", "RoutingManager started in background for $frequency")
+        }
 
         return START_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        val app = application as com.mediawalkie.WalkieApplication
+        app.routingManager.stop()
         releaseWakeLock()
-        // TODO: Stop RoutingManager
     }
 
     override fun onBind(intent: Intent?): IBinder? {

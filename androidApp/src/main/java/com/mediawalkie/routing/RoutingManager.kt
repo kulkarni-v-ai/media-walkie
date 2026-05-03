@@ -108,11 +108,12 @@ class RoutingManager(private val context: Context, private val repository: Walki
     }
 
     fun restart(frequency: String, userId: String? = null) {
-        Log.d(TAG, "RESTARTING RADIO ENGINE for $frequency")
-        stop()
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(500) // Cooling period
+        Log.d(TAG, "PERFORMING HOT RESTART for $frequency")
+        scope.launch {
+            stop()
+            delay(1000) // 1s Cooling period to let OS release hardware
             start(frequency, userId)
+            Log.d(TAG, "HOT RESTART COMPLETE")
         }
     }
 
