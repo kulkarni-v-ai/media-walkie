@@ -1,19 +1,24 @@
 package com.mediawalkie.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mediawalkie.data.SessionManager
 import com.mediawalkie.data.api.RegisterRequest
 import com.mediawalkie.data.api.WalkieApi
-import com.mediawalkie.ui.theme.PrimaryVibrant
-import androidx.compose.ui.graphics.Color
+import com.mediawalkie.ui.theme.*
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,7 +26,6 @@ import kotlinx.coroutines.launch
 fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () -> Unit) {
     var name by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -30,27 +34,41 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .background(BackgroundOLED)
+            .padding(32.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "MediaWalkie", style = MaterialTheme.typography.headlineLarge, color = PrimaryVibrant)
-        Spacer(modifier = Modifier.height(32.dp))
+        Text(
+            text = "MEDIA WALKIE",
+            color = GoldPrimary,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 4.sp
+        )
+        Text(
+            text = "AUTHENTICATION",
+            color = TextGray,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 2.sp
+        )
+
+        Spacer(modifier = Modifier.height(48.dp))
 
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Call Sign (Name)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email Address") },
-            modifier = Modifier.fillMaxWidth()
+            label = { Text("Callsign / Name") },
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = GoldPrimary,
+                unfocusedBorderColor = TextGray.copy(alpha = 0.3f),
+                focusedLabelColor = GoldPrimary,
+                unfocusedLabelColor = TextGray,
+                cursorColor = GoldPrimary
+            )
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -58,41 +76,63 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
             value = phone,
             onValueChange = { phone = it },
             label = { Text("Phone Number") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = GoldPrimary,
+                unfocusedBorderColor = TextGray.copy(alpha = 0.3f),
+                focusedLabelColor = GoldPrimary,
+                unfocusedLabelColor = TextGray,
+                cursorColor = GoldPrimary
+            )
         )
         Spacer(modifier = Modifier.height(16.dp))
         
         OutlinedTextField(
             value = pin,
             onValueChange = { pin = it },
-            label = { Text("Secret PIN") },
+            label = { Text("Security PIN") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = GoldPrimary,
+                unfocusedBorderColor = TextGray.copy(alpha = 0.3f),
+                focusedLabelColor = GoldPrimary,
+                unfocusedLabelColor = TextGray,
+                cursorColor = GoldPrimary
+            )
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         if (errorMsg.isNotEmpty()) {
-            Text(text = errorMsg, color = MaterialTheme.colorScheme.error, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = errorMsg, 
+                color = if (errorMsg.contains("success", true)) SuccessGreen else Color.Red, 
+                textAlign = TextAlign.Center,
+                fontSize = 14.sp
+            )
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Button(
                 onClick = {
                     scope.launch {
                         isLoading = true
                         try {
-                            val res = api.register(RegisterRequest(name, pin, "device123", email, phone))
-                            errorMsg = res.error ?: "Account created! Pending admin verification."
+                            val res = api.register(RegisterRequest(name, pin, "device123", "", phone))
+                            errorMsg = res.error ?: "Registration Successful! Pending Admin Verification."
                         } catch (e: Exception) {
                             errorMsg = "Network error: ${e.message}"
                         }
                         isLoading = false
                     }
                 },
-                enabled = !isLoading && name.isNotBlank() && pin.isNotBlank()
+                modifier = Modifier.weight(1f).height(56.dp),
+                enabled = !isLoading && name.isNotBlank() && pin.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = SurfaceCard),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Register")
+                Text("Register", color = Color.White, fontWeight = FontWeight.Bold)
             }
 
             Button(
@@ -103,11 +143,10 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
                             val res = api.verify(RegisterRequest(name, pin, "device123"))
                             if (res.user?.isVerified == true) {
                                 sessionManager.saveSession(res.user.name, true)
-                                // Save userId in session for group filtering
                                 sessionManager.saveUserId(res.user._id)
                                 onVerified()
                             } else {
-                                errorMsg = res.error ?: "Verification failed."
+                                errorMsg = res.error ?: "Account is pending verification by Superadmin."
                             }
                         } catch (e: Exception) {
                             errorMsg = "Network error: ${e.message}"
@@ -115,9 +154,12 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
                         isLoading = false
                     }
                 },
-                enabled = !isLoading && name.isNotBlank() && pin.isNotBlank()
+                modifier = Modifier.weight(1f).height(56.dp),
+                enabled = !isLoading && name.isNotBlank() && pin.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Login")
+                Text("Login", color = Color.Black, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -126,13 +168,12 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
         TextButton(
             onClick = {
                 scope.launch {
-                    // Bypass the server entirely for offline mesh usage
                     sessionManager.saveSession("Offline User", true)
                     onVerified()
                 }
             }
         ) {
-            Text("Skip & Use Offline Mode", color = Color.Gray)
+            Text("Skip & Use Offline Mode", color = TextGray)
         }
     }
 }
