@@ -28,21 +28,7 @@ class WebRTCHandler(
     }
 
     private fun ensureInitialized() {
-        if (isInitialized) return
-        try {
-            initializeWebRTC()
-            isInitialized = true
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize WebRTC", e)
-        }
-    }
-
-    private fun initializeWebRTC() {
-        val options = PeerConnectionFactory.InitializationOptions.builder(context)
-            .setEnableInternalTracer(true)
-            .createInitializationOptions()
-        PeerConnectionFactory.initialize(options)
-        
+        if (peerConnectionFactory != null) return
         val pcOptions = PeerConnectionFactory.Options()
         peerConnectionFactory = PeerConnectionFactory.builder()
             .setOptions(pcOptions)
