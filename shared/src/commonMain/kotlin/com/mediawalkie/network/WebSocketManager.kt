@@ -18,14 +18,20 @@ class WebSocketManager(
     private var session: DefaultClientWebSocketSession? = null
     private val _connectionState = MutableStateFlow(false)
     val connectionState = _connectionState.asStateFlow()
-
+    private val json = Json { ignoreUnknownKeys = true }
     private val _events = MutableSharedFlow<JsonElement>()
     val events = _events.asSharedFlow()
-
     private val _signalFlow = MutableSharedFlow<WebRTCSignal>()
     val signalFlow = _signalFlow.asSharedFlow()
+    private val _audioFlow = MutableSharedFlow<ByteArray>()
+    val audioFlow = _audioFlow.asSharedFlow()
 
-    private val json = Json { ignoreUnknownKeys = true }
+    suspend fun sendAudioData(data: ByteArray) {
+        // Socket.IO 4 Binary format is complex in raw WebSocket, but some servers accept 45[event, binary] 
+        // or just a raw binary frame if it's the only one. 
+        // For simplicity and compatibility with the old server logic:
+        session?.send(Frame.Binary(data))
+    }
 
     fun connect() {
         CoroutineScope(Dispatchers.Default).launch {
@@ -59,14 +65,24 @@ class WebSocketManager(
                                             val signal = json.decodeFromJsonElement<WebRTCSignal>(data)
                                             _signalFlow.emit(signal)
                                         } else if (event == "audio_data") {
-                                            // Handle legacy binary if needed
+                                            // Classic Global Audio Logic
+                                            if (data is JsonPrimitive && data.isString) {
+                                                // If server sends as Base64 string
+                                                // val bytes = data.content.decodeBase64Bytes()
+                                                // _audioFlow.emit(bytes)
+                                            }
                                         }
                                         _events.emit(data)
                                     }
+                                } else if (frame is Frame.Binary) {
+                                    // Some Socket.IO servers send binary frames for audio
+                                    _audioFlow.emit(frame.data)
                                 }
                             } catch (e: Exception) {
                                 // Silent fail for common code
                             }
+                        } else if (frame is Frame.Binary) {
+                            _audioFlow.emit(frame.data)
                         }
                     }
                 }

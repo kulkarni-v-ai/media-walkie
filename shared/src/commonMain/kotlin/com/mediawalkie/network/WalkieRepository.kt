@@ -26,9 +26,19 @@ class WalkieRepository(
     val versionManager = VersionManager(client)
 
     val connectionState: StateFlow<Boolean> = webSocketManager.connectionState
+    val audioFlow = webSocketManager.audioFlow
+    val signalFlow = webSocketManager.signalFlow
 
     fun connect() {
         webSocketManager.connect()
+    }
+
+    suspend fun sendAudioData(data: ByteArray) {
+        webSocketManager.sendAudioData(data)
+    }
+
+    suspend fun sendSignal(signal: WebRTCSignal) {
+        webSocketManager.sendSignal(signal)
     }
 
     suspend fun checkUpdate(): VersionInfo? {

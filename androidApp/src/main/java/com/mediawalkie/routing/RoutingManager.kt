@@ -37,22 +37,31 @@ class RoutingManager(private val context: Context, private val repository: Walki
             meshManager.onPayloadReceived = { payload ->
                 Log.d(TAG, "Received payload from Mesh. Playing...")
                 audioEngine.queueAudioForPlayback(payload)
-                
-                if (isInternetAvailable) {
-                    legacyWebRTCEngine.sendAudioData(payload)
-                }
             }
 
             meshManager.onPeerCountChanged = { count ->
                 connectedMeshPeers = count
             }
 
+            // Wire up WebSocket Global Audio callbacks
+            CoroutineScope(Dispatchers.IO).launch {
+                repository.audioFlow.collect { payload ->
+                    Log.d(TAG, "Received global payload from Internet. Playing...")
+                    audioEngine.queueAudioForPlayback(payload)
+                }
+            }
+
             audioEngine.onAudioDataCaptured = { payload ->
+                // Always send to Mesh
                 if (connectedMeshPeers > 0) {
                     meshManager.sendAudio(payload)
                 }
+                
+                // Also send to Internet if available
                 if (isInternetAvailable) {
-                    legacyWebRTCEngine.sendAudioData(payload)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        repository.sendAudioData(payload)
+                    }
                 }
             }
 
