@@ -137,17 +137,26 @@ class RoutingManager(private val context: Context, private val repository: Walki
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
         
         if (active) {
-            Log.d(TAG, "PTT Pressed - Starting Transmission")
+            Log.d(TAG, "PTT Pressed - MODE: ${if (isInternetAvailable) "INTERNET" else "OFFLINE MESH"}")
             audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
             audioManager.isSpeakerphoneOn = true
             
-            // Start both engines for maximum reach
+            // HYBRID TRANSMISSION: Always try to capture audio
             audioEngine.startCapture() 
+
             if (isInternetAvailable) {
+                // Internet is available - Use Professional WebRTC
                 webRTCHandler?.startCall()
+                // Also send to mesh as secondary if peers exist
+                if (connectedMeshPeers > 0) {
+                    Log.d(TAG, "Internet active, but also sending to $connectedMeshPeers mesh peers")
+                }
+            } else {
+                // Offline Mode - Mesh handles transmission via audioEngine callbacks
+                Log.d(TAG, "Offline mode - Transmitting to $connectedMeshPeers mesh peers")
             }
         } else {
-            Log.d(TAG, "PTT Released - Stopping Transmission")
+            Log.d(TAG, "PTT Released")
             audioEngine.stopCapture()
             webRTCHandler?.stopCall()
             audioManager.mode = android.media.AudioManager.MODE_NORMAL
