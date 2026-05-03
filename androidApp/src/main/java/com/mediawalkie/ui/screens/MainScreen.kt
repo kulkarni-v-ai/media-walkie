@@ -85,6 +85,26 @@ fun MainScreen(
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
             )
+            
+            // Active Speaker Indicator
+            val activeSpeaker = routingManager?.currentSpeaker
+            if (activeSpeaker != null) {
+                Spacer(Modifier.width(16.dp))
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(Color.Red)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = "$activeSpeaker",
+                    color = GoldPrimary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.sp
+                )
+            }
             Spacer(Modifier.weight(1f))
             TextButton(onClick = { 
                 routingManager?.restart(frequency, userId)

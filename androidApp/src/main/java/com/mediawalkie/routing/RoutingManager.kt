@@ -149,6 +149,11 @@ class RoutingManager(private val context: Context, private val repository: Walki
             }
         }
 
+        // GLOBAL VOICE IGNITION: Keep hardware ready for voice at all times
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
+        audioManager.isSpeakerphoneOn = true
+
         // PERSISTENT MESH RETRY: If no peers, restart scan every 15s
         scope.launch {
             while (isActive) {
@@ -206,9 +211,6 @@ class RoutingManager(private val context: Context, private val repository: Walki
         } else {
             Log.d(TAG, "PTT Released")
             audioEngine.stopCapture()
-            
-            // RESET HARDWARE
-            audioManager.mode = android.media.AudioManager.MODE_NORMAL
         }
     }
 }
