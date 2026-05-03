@@ -129,10 +129,11 @@ app.post('/api/groups', async (req, res) => {
     await group.save();
     res.status(201).json({ message: 'Group created successfully', group });
   } catch (error) {
+    console.error("Channel Creation Error:", error);
     if (error.code === 11000) {
-      return res.status(400).json({ error: 'Group name already exists' });
+      return res.status(400).json({ error: 'Channel name already exists' });
     }
-    res.status(500).json({ error: 'Failed to create group' });
+    res.status(500).json({ error: 'Internal Server Error: ' + error.message });
   }
 });
 
@@ -144,6 +145,22 @@ app.get('/api/admin/groups', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch groups' });
     }
+});
+
+// Health Check for Render
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
+// App Version Control API
+app.get('/api/version', (req, res) => {
+    res.status(200).json({
+        latestVersion: "1.1.0",
+        minSupportedVersion: "1.0.0",
+        updateType: "optional", // force | optional | none
+        updateUrl: "https://play.google.com/store/apps/details?id=com.mediawalkie",
+        releaseNotes: "Performance improvements and battery optimizations."
+    });
 });
 
 const server = http.createServer(app);

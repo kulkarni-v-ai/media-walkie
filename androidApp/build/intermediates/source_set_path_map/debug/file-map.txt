@@ -1,0 +1,54 @@
+com.mediawalkie.androidApp-runtime-saveable-release-0 C:\Users\vinee\.gradle\caches\transforms-4\0042745de56c7900ca6443a5a016b87d\transformed\runtime-saveable-release\res
+com.mediawalkie.androidApp-play-services-basement-18.0.0-1 C:\Users\vinee\.gradle\caches\transforms-4\004e1622a0fd178d45132aa41674dec2\transformed\play-services-basement-18.0.0\res
+com.mediawalkie.androidApp-datastore-preferences-1.0.0-2 C:\Users\vinee\.gradle\caches\transforms-4\051ebd95c05fae95846e057d36d8cda9\transformed\datastore-preferences-1.0.0\res
+com.mediawalkie.androidApp-startup-runtime-1.1.1-3 C:\Users\vinee\.gradle\caches\transforms-4\07a036cdd5b02a45a3948fc8bd2a5699\transformed\startup-runtime-1.1.1\res
+com.mediawalkie.androidApp-customview-poolingcontainer-1.0.0-4 C:\Users\vinee\.gradle\caches\transforms-4\0c6a2b2720ccaec66828c2167c2866bd\transformed\customview-poolingcontainer-1.0.0\res
+com.mediawalkie.androidApp-ui-test-manifest-1.5.0-5 C:\Users\vinee\.gradle\caches\transforms-4\104cd4e7f6fb72af6d4c9770beed95f2\transformed\ui-test-manifest-1.5.0\res
+com.mediawalkie.androidApp-lifecycle-livedata-2.6.2-6 C:\Users\vinee\.gradle\caches\transforms-4\15642a7ebc2de8eb1bbbe804d3b11778\transformed\lifecycle-livedata-2.6.2\res
+com.mediawalkie.androidApp-savedstate-ktx-1.2.1-7 C:\Users\vinee\.gradle\caches\transforms-4\1659f483de21b0779838832fee56385a\transformed\savedstate-ktx-1.2.1\res
+com.mediawalkie.androidApp-lifecycle-viewmodel-2.6.2-8 C:\Users\vinee\.gradle\caches\transforms-4\2961e6b9518dcb944cb6147767947417\transformed\lifecycle-viewmodel-2.6.2\res
+com.mediawalkie.androidApp-lifecycle-process-2.6.2-9 C:\Users\vinee\.gradle\caches\transforms-4\3500c9f9b94c16563c60e1853bf3b674\transformed\lifecycle-process-2.6.2\res
+com.mediawalkie.androidApp-ui-tooling-release-10 C:\Users\vinee\.gradle\caches\transforms-4\38a3def07508abb59de920c39a94af02\transformed\ui-tooling-release\res
+com.mediawalkie.androidApp-material-icons-core-1.4.0-11 C:\Users\vinee\.gradle\caches\transforms-4\3a60223ee782b4b4600ebd2cf1ecbf20\transformed\material-icons-core-1.4.0\res
+com.mediawalkie.androidApp-profileinstaller-1.3.0-12 C:\Users\vinee\.gradle\caches\transforms-4\3b31770eaedf01a3fc396a51066c1dfd\transformed\profileinstaller-1.3.0\res
+com.mediawalkie.androidApp-activity-compose-1.8.0-13 C:\Users\vinee\.gradle\caches\transforms-4\3d030204d5ffb98db085d3248c901088\transformed\activity-compose-1.8.0\res
+com.mediawalkie.androidApp-lifecycle-runtime-2.6.2-14 C:\Users\vinee\.gradle\caches\transforms-4\3d4fc6580fc2d775e7a7ef9777a70ea9\transformed\lifecycle-runtime-2.6.2\res
+com.mediawalkie.androidApp-lifecycle-livedata-core-2.6.2-15 C:\Users\vinee\.gradle\caches\transforms-4\3ec6df6f74731a5693f9a03d859cc562\transformed\lifecycle-livedata-core-2.6.2\res
+com.mediawalkie.androidApp-core-1.12.0-16 C:\Users\vinee\.gradle\caches\transforms-4\3ef0470c86cc456629614ded5d589b6e\transformed\core-1.12.0\res
+com.mediawalkie.androidApp-play-services-base-18.0.1-17 C:\Users\vinee\.gradle\caches\transforms-4\3f438161cd64321323846068ca93c5c2\transformed\play-services-base-18.0.1\res
+com.mediawalkie.androidApp-datastore-1.0.0-18 C:\Users\vinee\.gradle\caches\transforms-4\45485f670d10a3677e5ea4ac65cfbec2\transformed\datastore-1.0.0\res
+com.mediawalkie.androidApp-ui-geometry-release-19 C:\Users\vinee\.gradle\caches\transforms-4\45f3fd17a8f9fd7b0b3807aa951102e0\transformed\ui-geometry-release\res
+com.mediawalkie.androidApp-activity-ktx-1.8.0-20 C:\Users\vinee\.gradle\caches\transforms-4\4959970a10b057347b389ca08b5e64e5\transformed\activity-ktx-1.8.0\res
+com.mediawalkie.androidApp-animation-core-release-21 C:\Users\vinee\.gradle\caches\transforms-4\4fac866710515ac72f33db6b9f52f4cd\transformed\animation-core-release\res
+com.mediawalkie.androidApp-core-ktx-1.12.0-22 C:\Users\vinee\.gradle\caches\transforms-4\51fdeba1b18901841f455d91f824f0b4\transformed\core-ktx-1.12.0\res
+com.mediawalkie.androidApp-activity-1.8.0-23 C:\Users\vinee\.gradle\caches\transforms-4\560e6b085e8bcb4e7c86b4dfa5b7d5f0\transformed\activity-1.8.0\res
+com.mediawalkie.androidApp-ui-util-release-24 C:\Users\vinee\.gradle\caches\transforms-4\56940016a5357bf77518de3514155536\transformed\ui-util-release\res
+com.mediawalkie.androidApp-ui-text-release-25 C:\Users\vinee\.gradle\caches\transforms-4\59477805bc68849dbe2870e29765e19f\transformed\ui-text-release\res
+com.mediawalkie.androidApp-lifecycle-viewmodel-ktx-2.6.2-26 C:\Users\vinee\.gradle\caches\transforms-4\5a680ec1ce1816dfc2ba86d472c662d9\transformed\lifecycle-viewmodel-ktx-2.6.2\res
+com.mediawalkie.androidApp-annotation-experimental-1.3.0-27 C:\Users\vinee\.gradle\caches\transforms-4\66dcac6cab8d36b3e5d3fc64c281ad56\transformed\annotation-experimental-1.3.0\res
+com.mediawalkie.androidApp-animation-release-28 C:\Users\vinee\.gradle\caches\transforms-4\7d1d972f91cde3577c18b0172a1a46a3\transformed\animation-release\res
+com.mediawalkie.androidApp-emoji2-1.4.0-29 C:\Users\vinee\.gradle\caches\transforms-4\80bb750a00240505f4004d2513563d6d\transformed\emoji2-1.4.0\res
+com.mediawalkie.androidApp-ui-tooling-preview-release-30 C:\Users\vinee\.gradle\caches\transforms-4\8269feabc59c2046dd2e5bdb29bf05ac\transformed\ui-tooling-preview-release\res
+com.mediawalkie.androidApp-foundation-release-31 C:\Users\vinee\.gradle\caches\transforms-4\87eaeb7e15af7d5ed162649d5ec0fbc2\transformed\foundation-release\res
+com.mediawalkie.androidApp-material-1.4.0-32 C:\Users\vinee\.gradle\caches\transforms-4\88e33a17381cc8a03f68648743c11bcb\transformed\material-1.4.0\res
+com.mediawalkie.androidApp-ui-unit-release-33 C:\Users\vinee\.gradle\caches\transforms-4\8eacf27d8b34ac8ff9a74bdc88b3c51a\transformed\ui-unit-release\res
+com.mediawalkie.androidApp-ui-graphics-release-34 C:\Users\vinee\.gradle\caches\transforms-4\952dbfaa825adf3faa12574fa847fe1b\transformed\ui-graphics-release\res
+com.mediawalkie.androidApp-runtime-release-35 C:\Users\vinee\.gradle\caches\transforms-4\99420defc3070cadda5ad837f4231a6c\transformed\runtime-release\res
+com.mediawalkie.androidApp-play-services-nearby-18.7.0-36 C:\Users\vinee\.gradle\caches\transforms-4\9e3719559fce10f7728027fcae6cb2a1\transformed\play-services-nearby-18.7.0\res
+com.mediawalkie.androidApp-foundation-layout-release-37 C:\Users\vinee\.gradle\caches\transforms-4\a58a2cec872a0d5a5f3bda3f72e0c10a\transformed\foundation-layout-release\res
+com.mediawalkie.androidApp-material3-1.0.0-38 C:\Users\vinee\.gradle\caches\transforms-4\c82833e9222075a5a68d4a89f0f60154\transformed\material3-1.0.0\res
+com.mediawalkie.androidApp-ui-tooling-data-release-39 C:\Users\vinee\.gradle\caches\transforms-4\cf0a75f3c2e35f8d560162220b6ecd3d\transformed\ui-tooling-data-release\res
+com.mediawalkie.androidApp-core-runtime-2.2.0-40 C:\Users\vinee\.gradle\caches\transforms-4\cf8f48b93eea18f552e670efb3e4c07c\transformed\core-runtime-2.2.0\res
+com.mediawalkie.androidApp-lifecycle-runtime-ktx-2.6.2-41 C:\Users\vinee\.gradle\caches\transforms-4\dd168e6a95a5adecc9cfececfb87f7f5\transformed\lifecycle-runtime-ktx-2.6.2\res
+com.mediawalkie.androidApp-coordinatorlayout-1.0.0-42 C:\Users\vinee\.gradle\caches\transforms-4\e6faee6cbc23ac174f9fa87addedf8fd\transformed\coordinatorlayout-1.0.0\res
+com.mediawalkie.androidApp-ui-release-43 C:\Users\vinee\.gradle\caches\transforms-4\f1bb1295032f43320031db8183b7e287\transformed\ui-release\res
+com.mediawalkie.androidApp-savedstate-1.2.1-44 C:\Users\vinee\.gradle\caches\transforms-4\f7777af77e35931f66faf840f9bff0cd\transformed\savedstate-1.2.1\res
+com.mediawalkie.androidApp-lifecycle-viewmodel-savedstate-2.6.2-45 C:\Users\vinee\.gradle\caches\transforms-4\fd14e33126d8024e9883f567c76b8f83\transformed\lifecycle-viewmodel-savedstate-2.6.2\res
+com.mediawalkie.androidApp-material-ripple-1.4.0-46 C:\Users\vinee\.gradle\caches\transforms-4\fd8db07bbe0fa81c15e9845507d64d98\transformed\material-ripple-1.4.0\res
+com.mediawalkie.androidApp-resValues-47 C:\Users\vinee\Desktop\Media Walkie\media-walkie\androidApp\build\generated\res\resValues\debug
+com.mediawalkie.androidApp-packageDebugResources-48 C:\Users\vinee\Desktop\Media Walkie\media-walkie\androidApp\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.mediawalkie.androidApp-packageDebugResources-49 C:\Users\vinee\Desktop\Media Walkie\media-walkie\androidApp\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.mediawalkie.androidApp-merged_res-50 C:\Users\vinee\Desktop\Media Walkie\media-walkie\androidApp\build\intermediates\merged_res\debug
+com.mediawalkie.androidApp-debug-51 C:\Users\vinee\Desktop\Media Walkie\media-walkie\androidApp\src\debug\res
+com.mediawalkie.androidApp-main-52 C:\Users\vinee\Desktop\Media Walkie\media-walkie\androidApp\src\main\res
+com.mediawalkie.androidApp-packaged_res-53 C:\Users\vinee\Desktop\Media Walkie\media-walkie\shared\build\intermediates\packaged_res\debug

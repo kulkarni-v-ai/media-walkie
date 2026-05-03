@@ -34,7 +34,22 @@
         </div>
 
         <div id="admin-content" style="display:none;">
-            <h2>User Management</h2>
+            <h2 style="margin-top: 40px;">Active Channels</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>NAME</th>
+                        <th>FREQUENCY</th>
+                        <th>RANGE</th>
+                        <th>CREATED</th>
+                    </tr>
+                </thead>
+                <tbody id="group-table">
+                    <!-- Groups loaded here -->
+                </tbody>
+            </table>
+
+            <h2 style="margin-top: 40px;">User Management</h2>
             <table>
                 <thead>
                     <tr>
@@ -51,12 +66,12 @@
                 </tbody>
             </table>
 
-            <h2 style="margin-top: 40px;">Create Channel</h2>
-            <div style="background: var(--surface); padding: 20px; border-radius: 12px;">
-                <input type="text" id="group-name" placeholder="Channel Name">
-                <input type="text" id="group-freq" placeholder="Frequency (MHz)">
-                <input type="text" id="group-range" placeholder="Range (e.g. 500m)">
-                <button onclick="createGroup()">CREATE CHANNEL</button>
+            <h2 style="margin-top: 40px;">Create New Channel</h2>
+            <div style="background: var(--surface); padding: 20px; border-radius: 12px; display: flex; gap: 10px;">
+                <input type="text" id="group-name" placeholder="Channel Name" style="flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: white;">
+                <input type="text" id="group-freq" placeholder="Freq (MHz)" style="flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: white;">
+                <input type="text" id="group-range" placeholder="Range (e.g. 1km)" style="flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: white;">
+                <button onclick="createGroup()">CREATE</button>
             </div>
         </div>
     </div>
@@ -78,16 +93,34 @@
         }
 
         async function loadData() {
-            const groupRes = await fetch('/api/groups?userId=600000000000000000000000'); // Fake ID to trigger full list if admin logic allows, or add a proper admin endpoint
-            // Let's assume we have a proper admin endpoint now
-            const usersRes = await fetch('/api/admin/users');
-            const users = await usersRes.json();
-            
-            // Re-fetch all groups for assignment dropdown
-            const gRes = await fetch('/api/admin/groups'); // I should add this endpoint
-            allGroups = await gRes.json();
+            try {
+                // Fetch all groups first
+                const gRes = await fetch('/api/admin/groups');
+                allGroups = await gRes.json();
+                renderGroups(allGroups);
 
-            renderUsers(users);
+                // Then fetch users
+                const usersRes = await fetch('/api/admin/users');
+                const users = await usersRes.json();
+                renderUsers(users);
+            } catch (err) {
+                console.error("Load Data Error:", err);
+            }
+        }
+
+        function renderGroups(groups) {
+            const tbody = document.getElementById('group-table');
+            tbody.innerHTML = '';
+            groups.forEach(g => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color: var(--primary); font-weight: bold;">${g.name}</td>
+                    <td>${g.frequency} MHz</td>
+                    <td>${g.rangeDescription || 'Standard'}</td>
+                    <td style="font-size: 10px; color: #888;">${new Date(g.createdAt).toLocaleDateString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         function renderUsers(users) {
@@ -99,11 +132,11 @@
                 tr.innerHTML = `
                     <td>${user.name} ${user.isAdmin ? '(ADMIN)' : ''}</td>
                     <td>${user.email || 'N/A'}<br>${user.phone || 'N/A'}</td>
-                    <td><input type="text" value="${user.pin}" onblur="updatePin('${user._id}', this.value)" style="width: 80px; background: transparent; color: white; border: 1px solid #444;"></td>
+                    <td><input type="text" value="${user.pin}" onblur="updatePin('${user._id}', this.value)" style="width: 80px; background: transparent; color: white; border: 1px solid #444; padding: 4px;"></td>
                     <td><span class="badge ${user.isVerified ? 'badge-verified' : 'badge-pending'}">${user.isVerified ? 'VERIFIED' : 'PENDING'}</span></td>
                     <td>
-                        <select multiple onchange="updateGroups('${user._id}', this)">
-                            ${allGroups.map(g => `<option value="${g._id}" ${user.assignedGroups.some(ag => ag._id === g._id) ? 'selected' : ''}>${g.name} (${g.rangeDescription})</option>`).join('')}
+                        <select multiple onchange="updateGroups('${user._id}', this)" style="height: 60px;">
+                            ${allGroups.map(g => `<option value="${g._id}" ${user.assignedGroups && user.assignedGroups.some(ag => (ag._id || ag) === g._id) ? 'selected' : ''}>${g.name}</option>`).join('')}
                         </select>
                     </td>
                     <td>
@@ -146,12 +179,26 @@
             const frequency = document.getElementById('group-freq').value;
             const rangeDescription = document.getElementById('group-range').value;
             
-            await fetch('/api/groups', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, frequency, rangeDescription })
-            });
-            loadData();
+            try {
+                const response = await fetch('/api/groups', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, frequency, rangeDescription })
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert("Channel created successfully!");
+                    document.getElementById('group-name').value = '';
+                    document.getElementById('group-freq').value = '';
+                    document.getElementById('group-range').value = '';
+                    loadData();
+                } else {
+                    alert("Error: " + (result.error || "Unknown error"));
+                }
+            } catch (err) {
+                alert("Network error: " + err.message);
+            }
         }
     </script>
 </body>

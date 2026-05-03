@@ -1,0 +1,141 @@
+package com.mediawalkie.routing
+
+import android.content.Context
+import android.util.Log
+import androidx.compose.runtime.*
+import com.mediawalkie.audio.AudioEngine
+import com.mediawalkie.network.MeshManager
+import com.mediawalkie.network.WebRTCEngine
+import com.mediawalkie.network.WebRTCHandler
+import com.mediawalkie.network.WalkieRepository
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import kotlinx.coroutines.*
+
+class RoutingManager(private val context: Context, private val repository: WalkieRepository) {
+
+    private val TAG = "RoutingManager"
+    
+    val audioEngine by lazy { AudioEngine(context) }
+    val meshManager by lazy { MeshManager(context) }
+    val legacyWebRTCEngine by lazy { WebRTCEngine(context) }
+    private var webRTCHandler: WebRTCHandler? = null
+
+    private var activeFrequency: String = "104.5"
+    private var isInternetAvailable = false
+    var connectedMeshPeers by mutableStateOf(0)
+        private set
+    private var isPttActive = false
+    var currentSpeaker by mutableStateOf<String?>(null)
+        private set
+
+    init {
+        try {
+            checkInternet()
+            
+            // Wire up MeshManager callbacks
+            meshManager.onPayloadReceived = { payload ->
+                Log.d(TAG, "Received payload from Mesh. Playing...")
+                audioEngine.queueAudioForPlayback(payload)
+                
+                if (isInternetAvailable) {
+                    legacyWebRTCEngine.sendAudioData(payload)
+                }
+            }
+
+            meshManager.onPeerCountChanged = { count ->
+                connectedMeshPeers = count
+            }
+
+            audioEngine.onAudioDataCaptured = { payload ->
+                if (connectedMeshPeers > 0) {
+                    meshManager.sendAudio(payload)
+                }
+                if (isInternetAvailable) {
+                    legacyWebRTCEngine.sendAudioData(payload)
+                }
+            }
+
+            audioEngine.onSpeakerChanged = { name ->
+                currentSpeaker = name
+            }
+
+            webRTCHandler = WebRTCHandler(context, repository) { remoteTrack ->
+                Log.d(TAG, "Professional WebRTC Remote Track Received!")
+            }
+
+            CoroutineScope(Dispatchers.IO).launch {
+                while (true) {
+                    try {
+                        val previousState = isInternetAvailable
+                        checkInternet()
+                        if (isInternetAvailable && !previousState) {
+                            Log.d(TAG, "Internet restored! Connecting Signaling...")
+                            repository.connect()
+                        }
+                    } catch (e: Exception) {}
+                    delay(5000)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "RoutingManager init failed safely", e)
+        }
+    }
+
+    fun start(frequency: String, userId: String? = null) {
+        activeFrequency = frequency
+        audioEngine.startPlayback() 
+        
+        checkInternet()
+        
+        meshManager.startAdvertising(frequency)
+        meshManager.startDiscovery(frequency)
+
+        if (isInternetAvailable) {
+            repository.connect()
+            scope.launch {
+                repository.joinChannel(frequency, userId)
+            }
+    // legacyWebRTCEngine.initialize()
+    // legacyWebRTCEngine.connectToSignalingServer("...", frequency, userId)
+        }
+    }
+
+    private val scope = CoroutineScope(Dispatchers.Main + Job())
+
+    private fun checkInternet() {
+        try {
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val network = connectivityManager.activeNetwork
+            val capabilities = connectivityManager.getNetworkCapabilities(network)
+            isInternetAvailable = capabilities != null && (
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+            )
+        } catch (e: Exception) {
+            isInternetAvailable = false
+        }
+    }
+
+    fun stop() {
+        audioEngine.stopPlayback()
+        audioEngine.stopCapture()
+        meshManager.stopAll()
+        legacyWebRTCEngine.disconnect()
+        webRTCHandler?.stopCall()
+    }
+
+    fun setPttActive(active: Boolean, name: String = "User") {
+        isPttActive = active
+        audioEngine.userName = name
+        if (active) {
+            audioEngine.startCapture() // For Mesh
+            if (isInternetAvailable) {
+                webRTCHandler?.startCall() // For Professional WebRTC
+            }
+        } else {
+            audioEngine.stopCapture()
+            webRTCHandler?.stopCall()
+        }
+    }
+}

@@ -1,0 +1,111 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.mediawalkie.androidApp-mergeDebugResources-49:/values-or/values-or.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\vinee\\.gradle\\caches\\transforms-4\\9e3719559fce10f7728027fcae6cb2a1\\transformed\\play-services-nearby-18.7.0\\res\\values-or\\values.xml",
+                    "from": {
+                        "startLines": "4",
+                        "startColumns": "0",
+                        "startOffsets": "202",
+                        "endColumns": "56",
+                        "endOffsets": "258"
+                    },
+                    "to": {
+                        "startLines": "38",
+                        "startColumns": "4",
+                        "startOffsets": "4086",
+                        "endColumns": "60",
+                        "endOffsets": "4142"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinee\\.gradle\\caches\\transforms-4\\3f438161cd64321323846068ca93c5c2\\transformed\\play-services-base-18.0.1\\res\\values-or\\values.xml",
+                    "from": {
+                        "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
+                        "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                        "startOffsets": "193,300,457,585,698,849,980,1090,1196,1359,1468,1625,1754,1900,2053,2114,2182",
+                        "endColumns": "106,156,127,112,150,130,109,105,162,108,156,128,145,152,60,67,82",
+                        "endOffsets": "299,456,584,697,848,979,1089,1195,1358,1467,1624,1753,1899,2052,2113,2181,2264"
+                    },
+                    "to": {
+                        "startLines": "12,13,14,15,16,17,18,19,21,22,23,24,25,26,27,28,29",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "1110,1221,1382,1514,1631,1786,1921,2035,2285,2452,2565,2726,2859,3009,3166,3231,3303",
+                        "endColumns": "110,160,131,116,154,134,113,109,166,112,160,132,149,156,64,71,86",
+                        "endOffsets": "1216,1377,1509,1626,1781,1916,2030,2140,2447,2560,2721,2854,3004,3161,3226,3298,3385"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinee\\.gradle\\caches\\transforms-4\\f1bb1295032f43320031db8183b7e287\\transformed\\ui-release\\res\\values-or\\values-or.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,202,289,381,481,567,644,742,830,917,987,1057,1135,1217,1287,1370,1437",
+                        "endColumns": "96,86,91,99,85,76,97,87,86,69,69,77,81,69,82,66,118",
+                        "endOffsets": "197,284,376,476,562,639,737,825,912,982,1052,1130,1212,1282,1365,1432,1551"
+                    },
+                    "to": {
+                        "startLines": "9,10,30,31,33,35,36,37,39,40,41,42,43,44,46,47,48",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "840,937,3390,3482,3653,3823,3900,3998,4147,4234,4304,4374,4452,4534,4705,4788,4855",
+                        "endColumns": "96,86,91,99,85,76,97,87,86,69,69,77,81,69,82,66,118",
+                        "endOffsets": "932,1019,3477,3577,3734,3895,3993,4081,4229,4299,4369,4447,4529,4599,4783,4850,4969"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinee\\.gradle\\caches\\transforms-4\\004e1622a0fd178d45132aa41674dec2\\transformed\\play-services-basement-18.0.0\\res\\values-or\\values.xml",
+                    "from": {
+                        "startLines": "4",
+                        "startColumns": "0",
+                        "startOffsets": "195",
+                        "endColumns": "135",
+                        "endOffsets": "330"
+                    },
+                    "to": {
+                        "startLines": "20",
+                        "startColumns": "4",
+                        "startOffsets": "2145",
+                        "endColumns": "139",
+                        "endOffsets": "2280"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinee\\.gradle\\caches\\transforms-4\\3ef0470c86cc456629614ded5d589b6e\\transformed\\core-1.12.0\\res\\values-or\\values-or.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,158,260,363,468,569,671,790",
+                        "endColumns": "102,101,102,104,100,101,118,100",
+                        "endOffsets": "153,255,358,463,564,666,785,886"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,45",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,208,310,413,518,619,721,4604",
+                        "endColumns": "102,101,102,104,100,101,118,100",
+                        "endOffsets": "203,305,408,513,614,716,835,4700"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\vinee\\.gradle\\caches\\transforms-4\\c82833e9222075a5a68d4a89f0f60154\\transformed\\material3-1.0.0\\res\\values-or\\values-or.xml",
+                    "from": {
+                        "startLines": "2,3,4",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "55,141,212",
+                        "endColumns": "85,70,83",
+                        "endOffsets": "136,207,291"
+                    },
+                    "to": {
+                        "startLines": "11,32,34",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "1024,3582,3739",
+                        "endColumns": "85,70,83",
+                        "endOffsets": "1105,3648,3818"
+                    }
+                }
+            ]
+        }
+    ]
+}
