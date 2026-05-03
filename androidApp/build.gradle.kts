@@ -57,7 +57,10 @@ dependencies {
     implementation("androidx.compose.material3:material3")
 
     // Google Nearby Connections API
-    implementation("com.google.android.gms:play-services-nearby:18.7.0")
+    implementation("com.google.android.gms:play-services-nearby:19.2.2")
+
+    // Socket.IO Client for Native Binary Support
+    implementation("io.socket:socket.io-client:2.1.0")
 
     // WebRTC Core Library for Android (maintained community build)
     implementation("io.github.webrtc-sdk:android:114.5735.07")

@@ -18,9 +18,8 @@ class RoutingManager(private val context: Context, private val repository: Walki
     
     val audioEngine by lazy { AudioEngine(context) }
     val meshManager by lazy { MeshManager(context) }
-    val legacyWebRTCEngine by lazy { WebRTCEngine(context) }
-    private var webRTCHandler: WebRTCHandler? = null
-
+    private val nativeSocket by lazy { com.mediawalkie.network.NativeSocketManager("https://media-walkie-signaling.onrender.com") }
+    
     private var activeFrequency: String = "104.5"
     private var isInternetAvailable = false
     var connectedMeshPeers by mutableStateOf(0)
@@ -52,16 +51,16 @@ class RoutingManager(private val context: Context, private val repository: Walki
                 connectedMeshPeers = count
             }
 
-            // Wire up WebSocket Global Audio callbacks
-            CoroutineScope(Dispatchers.IO).launch {
-                repository.onlineUsers.collect { count ->
+            // Wire up Native Socket Global Audio callbacks
+            CoroutineScope(Dispatchers.Main).launch {
+                nativeSocket.onlineUsers.collect { count ->
                     connectedOnlineUsers = count
                 }
             }
 
-            CoroutineScope(Dispatchers.IO).launch {
-                repository.audioFlow.collect { payload ->
-                    Log.d(TAG, "Received global payload from Internet. Playing and Relaying...")
+            CoroutineScope(Dispatchers.Main).launch {
+                nativeSocket.audioFlow.collect { payload ->
+                    Log.d(TAG, "Received binary payload from Internet. Playing...")
                     audioEngine.queueAudioForPlayback(payload)
                     
                     // REPEATER: Relay Internet audio to Mesh for local reach
@@ -77,20 +76,14 @@ class RoutingManager(private val context: Context, private val repository: Walki
                     meshManager.sendAudio(payload)
                 }
                 
-                // Also broadcast globally if possible
+                // Also broadcast globally via Native Binary Socket
                 if (isInternetAvailable) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        repository.sendAudioData(payload)
-                    }
+                    nativeSocket.sendAudio(payload)
                 }
             }
 
             audioEngine.onSpeakerChanged = { name ->
                 currentSpeaker = name
-            }
-
-            webRTCHandler = WebRTCHandler(context, repository) { remoteTrack ->
-                Log.d(TAG, "Professional WebRTC Remote Track Received!")
             }
 
             CoroutineScope(Dispatchers.IO).launch {
@@ -100,7 +93,7 @@ class RoutingManager(private val context: Context, private val repository: Walki
                         checkInternet()
                         if (isInternetAvailable && !previousState) {
                             Log.d(TAG, "Internet restored! Connecting Signaling...")
-                            repository.connect()
+                            nativeSocket.connect()
                         }
                     } catch (e: Exception) {}
                     delay(5000)
@@ -124,10 +117,10 @@ class RoutingManager(private val context: Context, private val repository: Walki
         meshManager.startDiscovery(frequency)
 
         if (isInternetAvailable) {
-            repository.connect()
+            nativeSocket.connect()
             scope.launch {
-                delay(1000) // Small delay to ensure WebSocket is ready
-                repository.joinChannel(frequency, userId)
+                delay(1000) 
+                nativeSocket.joinFrequency(frequency, userId ?: "unknown")
             }
         }
 
@@ -186,14 +179,9 @@ class RoutingManager(private val context: Context, private val repository: Walki
             audioManager.isSpeakerphoneOn = true
             
             audioEngine.startCapture() 
-
-            if (isInternetAvailable) {
-                webRTCHandler?.startCall()
-            }
         } else {
             Log.d(TAG, "PTT Released")
             audioEngine.stopCapture()
-            webRTCHandler?.stopCall()
             
             // RESET HARDWARE
             audioManager.mode = android.media.AudioManager.MODE_NORMAL
