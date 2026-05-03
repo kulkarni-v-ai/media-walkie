@@ -23,23 +23,14 @@ import com.mediawalkie.ui.theme.MediaWalkieTheme
 class MainActivity : ComponentActivity() {
 
     private var routingManager: RoutingManager? = null
-    private lateinit var sessionManager: SessionManager
-    private var walkieApi: WalkieApi? = null
-    private lateinit var repository: com.mediawalkie.network.WalkieRepository
+    private val repository by lazy { com.mediawalkie.network.WalkieRepository() }
+    private val sessionManager by lazy { SessionManager(this) }
+    private val walkieApi by lazy { WalkieApi.create() }
 
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        try {
-            repository = com.mediawalkie.network.WalkieRepository()
-            sessionManager = SessionManager(this)
-            walkieApi = WalkieApi.create()
-            // Initialize RoutingManager later to avoid startup crashes
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Boot initialization failed", e)
-        }
-
         setContent {
             MediaWalkieTheme {
                 val isVerified by sessionManager.isVerifiedFlow.collectAsState(initial = false)
@@ -51,10 +42,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     if (!isVerified) {
-                        walkieApi?.let { api ->
-                            AuthScreen(sessionManager = sessionManager, api = api) {
-                                // Recomposes on success
-                            }
+                        AuthScreen(sessionManager = sessionManager, api = walkieApi) {
+                            // Recomposes on success
                         }
                     } else {
                         // Permissions for modern Android
