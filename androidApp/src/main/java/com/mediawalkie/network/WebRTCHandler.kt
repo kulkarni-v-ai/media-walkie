@@ -49,10 +49,17 @@ class WebRTCHandler(
             .createPeerConnectionFactory()
     }
 
+    private var currentPeerId: String? = null
+
     private fun observeSignaling() {
         scope.launch {
             repository.webSocketManager.signalFlow.collectLatest { signal ->
                 ensureInitialized()
+                // Update targeted peer if signal contains senderId
+                if (signal.senderId != null) {
+                    currentPeerId = signal.senderId
+                }
+                
                 when (signal.type) {
                     "offer" -> handleOffer(signal)
                     "answer" -> handleAnswer(signal)
@@ -77,7 +84,11 @@ class WebRTCHandler(
                 peerConnection?.setLocalDescription(SimpleSdpObserver(), sdp)
                 scope.launch {
                     repository.webSocketManager.sendSignal(
-                        WebRTCSignal(type = "offer", sdp = sdp.description)
+                        WebRTCSignal(
+                            type = "offer", 
+                            sdp = sdp.description,
+                            targetId = currentPeerId // Targeted if known, else broadcast for discovery
+                        )
                     )
                 }
             }
@@ -85,7 +96,9 @@ class WebRTCHandler(
     }
 
     private fun createPeerConnection() {
-        val rtcConfig = PeerConnection.RTCConfiguration(emptyList())
+        val rtcConfig = PeerConnection.RTCConfiguration(listOf(
+            PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer()
+        ))
         peerConnection = peerConnectionFactory?.createPeerConnection(rtcConfig, object : PeerConnection.Observer {
             override fun onIceCandidate(candidate: IceCandidate) {
                 scope.launch {
@@ -94,7 +107,8 @@ class WebRTCHandler(
                             type = "ice", 
                             candidate = candidate.sdp, 
                             sdpMid = candidate.sdpMid, 
-                            sdpMLineIndex = candidate.sdpMLineIndex
+                            sdpMLineIndex = candidate.sdpMLineIndex,
+                            targetId = currentPeerId
                         )
                     )
                 }
@@ -102,11 +116,14 @@ class WebRTCHandler(
             override fun onAddTrack(receiver: RtpReceiver, streams: Array<out MediaStream>) {
                 val track = receiver.track()
                 if (track is AudioTrack) {
+                    Log.d(TAG, "Remote Audio Track Received!")
                     onRemoteStream(track)
                 }
             }
             override fun onSignalingChange(state: PeerConnection.SignalingState?) {}
-            override fun onIceConnectionChange(state: PeerConnection.IceConnectionState?) {}
+            override fun onIceConnectionChange(state: PeerConnection.IceConnectionState?) {
+                Log.d(TAG, "ICE Connection State: $state")
+            }
             override fun onIceConnectionReceivingChange(b: Boolean) {}
             override fun onIceGatheringChange(state: PeerConnection.IceGatheringState?) {}
             override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>?) {}
@@ -128,7 +145,11 @@ class WebRTCHandler(
                         peerConnection?.setLocalDescription(SimpleSdpObserver(), sdp)
                         scope.launch {
                             repository.webSocketManager.sendSignal(
-                                WebRTCSignal(type = "answer", sdp = sdp.description)
+                                WebRTCSignal(
+                                    type = "answer", 
+                                    sdp = sdp.description,
+                                    targetId = signal.senderId
+                                )
                             )
                         }
                     }

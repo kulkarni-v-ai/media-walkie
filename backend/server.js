@@ -218,29 +218,27 @@ io.on('connection', (socket) => {
     }
   });
 
-  // WebRTC Signaling: Offer
+  // Unified WebRTC Signaling
+  socket.on('webrtc_signal', (data) => {
+    const targetId = data.targetId || data.targetSocketId;
+    if (targetId) {
+      socket.to(targetId).emit('webrtc_signal', {
+        ...data,
+        senderId: socket.id,
+        senderSocketId: socket.id
+      });
+    } else if (socket.frequency) {
+      // Broadcast to frequency if no target (e.g. for discovery)
+      socket.to(socket.frequency).emit('webrtc_signal', {
+        ...data,
+        senderId: socket.id,
+        senderSocketId: socket.id
+      });
+    }
+  });
+
+  // WebRTC Signaling: Offer (Legacy Support)
   socket.on('webrtc_offer', (data) => {
-    socket.to(data.targetSocketId).emit('webrtc_offer', {
-      senderSocketId: socket.id,
-      offer: data.offer
-    });
-  });
-
-  // WebRTC Signaling: Answer
-  socket.on('webrtc_answer', (data) => {
-    socket.to(data.targetSocketId).emit('webrtc_answer', {
-      senderSocketId: socket.id,
-      answer: data.answer
-    });
-  });
-
-  // WebRTC Signaling: ICE Candidate
-  socket.on('webrtc_ice_candidate', (data) => {
-    socket.to(data.targetSocketId).emit('webrtc_ice_candidate', {
-      senderSocketId: socket.id,
-      candidate: data.candidate
-    });
-  });
 
   // Binary Audio Broadcast (The Walkie-Talkie Core)
   socket.on('audio_data', (data) => {

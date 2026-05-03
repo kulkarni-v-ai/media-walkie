@@ -128,7 +128,12 @@ class RoutingManager(private val context: Context, private val repository: Walki
     fun setPttActive(active: Boolean, name: String = "User") {
         isPttActive = active
         audioEngine.userName = name
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        
         if (active) {
+            audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
+            audioManager.isSpeakerphoneOn = true
+            
             audioEngine.startCapture() // For Mesh
             if (isInternetAvailable) {
                 webRTCHandler?.startCall() // For Professional WebRTC
@@ -136,6 +141,7 @@ class RoutingManager(private val context: Context, private val repository: Walki
         } else {
             audioEngine.stopCapture()
             webRTCHandler?.stopCall()
+            audioManager.mode = android.media.AudioManager.MODE_NORMAL
         }
     }
 }
