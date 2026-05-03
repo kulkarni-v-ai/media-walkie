@@ -48,7 +48,7 @@ fun MainScreen(
     onLogout: () -> Unit = {}
 ) {
     var isPressed by remember { mutableStateOf(false) }
-    var frequency by remember { mutableStateOf("104.5") }
+    var frequency by remember { mutableStateOf("NO CH") }
     var groups by remember { mutableStateOf<List<Group>>(emptyList()) }
     
     // PIN Check State
@@ -61,16 +61,28 @@ fun MainScreen(
     var pinInput by remember { mutableStateOf("") }
     var phoneInput by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+    var initialLoadDone by remember { mutableStateOf(false) }
 
     // Auto-start radio and FETCH GROUPS
     LaunchedEffect(frequency, userId) {
         if (userId.isNotEmpty()) {
-            routingManager?.start(frequency, userId)
-            try {
-                if (api != null) {
-                    groups = api.getGroups(userId)
-                }
-            } catch (e: Exception) {}
+            if (frequency != "NO CH" && frequency.isNotEmpty()) {
+                routingManager?.start(frequency, userId)
+            }
+            
+            if (!initialLoadDone) {
+                try {
+                    if (api != null) {
+                        val fetchedGroups = api.getGroups(userId)
+                        groups = fetchedGroups
+                        if (fetchedGroups.isNotEmpty() && frequency == "NO CH") {
+                            // Auto-switch to the first authorized channel using the PIN handler
+                            handleChannelSwitch(fetchedGroups.first())
+                        }
+                    }
+                } catch (e: Exception) {}
+                initialLoadDone = true
+            }
         }
     }
 
