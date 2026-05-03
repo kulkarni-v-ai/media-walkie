@@ -27,10 +27,8 @@ class WebSocketManager(
     val audioFlow = _audioFlow.asSharedFlow()
 
     suspend fun sendAudioData(data: ByteArray) {
-        // Socket.IO 4 Binary format is complex in raw WebSocket, but some servers accept 45[event, binary] 
-        // or just a raw binary frame if it's the only one. 
-        // For simplicity and compatibility with the old server logic:
-        session?.send(Frame.Binary(data))
+        // Socket.IO 4 Binary format: Send as a raw binary frame for classic logic compatibility
+        session?.send(Frame.Binary(true, data))
     }
 
     fun connect() {
