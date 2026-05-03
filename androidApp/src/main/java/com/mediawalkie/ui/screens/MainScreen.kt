@@ -241,13 +241,21 @@ fun MainScreen(routingManager: RoutingManager? = null, userName: String = "Unkno
         val totalPeers = offlinePeers + onlinePeers
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = if (totalPeers > 0) "STATUS: CONNECTED" else "STATUS: SCANNING...",
-                color = if (totalPeers > 0) Color(0xFF4CAF50) else Color.Gray,
-                fontSize = 12.sp,
-                letterSpacing = 1.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (totalPeers > 0) "STATUS: ACTIVE" else "STATUS: SCANNING...",
+                    color = if (totalPeers > 0) Color(0xFF4CAF50) else Color.Gray,
+                    fontSize = 12.sp,
+                    letterSpacing = 1.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.width(16.dp))
+                TextButton(onClick = { 
+                    routingManager?.start(frequency, userId)
+                }) {
+                    Text("RESTART RADIO", fontSize = 10.sp)
+                }
+            }
             Text(
                 text = "($offlinePeers MESH | $onlinePeers ONLINE)",
                 color = Color.Gray.copy(alpha = 0.7f),
