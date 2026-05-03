@@ -29,6 +29,7 @@ class NativeSocketManager(private val baseUrl: String) {
             val opts = IO.Options()
             opts.forceNew = true
             opts.reconnection = true
+            opts.transports = arrayOf("websocket") // REQUIRED for Render/Heroku binary stability
             
             socket = IO.socket(baseUrl, opts)
             

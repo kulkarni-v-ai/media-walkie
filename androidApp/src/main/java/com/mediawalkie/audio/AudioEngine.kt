@@ -104,6 +104,17 @@ class AudioEngine(private val context: Context) {
                 while (isRecording) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                     if (read > 0) {
+                        // Amplitude Check: Log every 100 packets to avoid spam
+                        var sum = 0.0
+                        for (i in 0 until read step 2) {
+                            val sample = (buffer[i].toInt() and 0xFF) or (buffer[i+1].toInt() shl 8)
+                            sum += Math.abs(sample.toDouble())
+                        }
+                        val avg = sum / (read / 2)
+                        if (sequenceNumber % 100 == 0L) {
+                            Log.d(TAG, "Mic Capture: $read bytes, Avg Amplitude: $avg")
+                        }
+
                         chunkBuffer.write(buffer, 0, read)
                         if (chunkBuffer.size() >= TARGET_CHUNK_SIZE) {
                             val audioData = chunkBuffer.toByteArray()
