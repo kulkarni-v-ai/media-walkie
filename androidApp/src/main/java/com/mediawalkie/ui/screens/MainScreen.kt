@@ -186,20 +186,6 @@ fun MainScreen(
                 // Action Cluster (Restart/Logout)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TextButton(
-                        onClick = { 
-                            scope.launch {
-                                try {
-                                    if (api != null) {
-                                        groups = api.getGroups(userId)
-                                    }
-                                } catch (e: Exception) {}
-                            }
-                        },
-                        contentPadding = PaddingValues(horizontal = 8.dp)
-                    ) {
-                        Text("SYNC", color = CyanPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
-                    TextButton(
                         onClick = { routingManager?.restart(frequency, userId) },
                         contentPadding = PaddingValues(horizontal = 8.dp)
                     ) {
@@ -254,13 +240,30 @@ fun MainScreen(
                         }
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "CHANNEL",
-                                color = TextGray,
-                                fontSize = 14.sp,
-                                letterSpacing = 4.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "CHANNEL",
+                                    color = TextGray,
+                                    fontSize = 14.sp,
+                                    letterSpacing = 4.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                IconButton(
+                                    onClick = { 
+                                        scope.launch {
+                                            try {
+                                                if (api != null) {
+                                                    groups = api.getGroups(userId)
+                                                }
+                                            } catch (e: Exception) {}
+                                        }
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(Icons.Default.Refresh, "Sync Channels", tint = CyanPrimary, modifier = Modifier.size(16.dp))
+                                }
+                            }
                             Spacer(Modifier.height(8.dp))
                             Row(verticalAlignment = Alignment.Bottom) {
                                 Text(
