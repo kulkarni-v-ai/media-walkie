@@ -26,9 +26,9 @@ data class User(
     val phone: String? = null
 )
 
-data class GroupRequest(val name: String, val frequency: String, val rangeDescription: String? = null)
+data class GroupRequest(val name: String, val frequency: String, val pin: String? = null, val rangeDescription: String? = null)
 data class GroupResponse(val message: String?, val error: String?, val group: Group?)
-data class Group(val name: String, val frequency: String, val rangeDescription: String? = "Standard Range")
+data class Group(val name: String, val frequency: String, val pin: String? = null, val rangeDescription: String? = "Standard Range")
 
 interface WalkieApi {
     @POST("/api/auth/register")
