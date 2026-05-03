@@ -39,8 +39,16 @@ class NativeSocketManager(private val baseUrl: String) {
             }
 
             socket?.on(Socket.EVENT_DISCONNECT) {
-                Log.d("NativeSocket", "Disconnected from server")
+                Log.d("NativeSocket", "Disconnected from server - Reconnecting...")
                 _connectionState.value = false
+            }
+
+            socket?.on(Socket.EVENT_RECONNECT_ATTEMPT) {
+                Log.d("NativeSocket", "Reconnection attempt #$it")
+            }
+
+            socket?.on(Socket.EVENT_CONNECT_ERROR) {
+                Log.e("NativeSocket", "Connection Error: ${it[0]}")
             }
 
             socket?.on("audio_data") { args ->

@@ -186,7 +186,14 @@ class AudioEngine(private val context: Context) {
             isPlaying = true
 
             Thread {
+                val PREFETCH_COUNT = 3
                 while (isPlaying) {
+                    if (jitterBuffer.size < PREFETCH_COUNT) {
+                        // Wait for buffer to fill to avoid jitter/clicking
+                        delay(20)
+                        continue
+                    }
+                    
                     val buffer = jitterBuffer.poll()
                     if (buffer != null) {
                         audioTrack?.write(buffer, 0, buffer.size)
