@@ -108,10 +108,26 @@ class RoutingManager(private val context: Context, private val repository: Walki
         Log.d(TAG, "Starting RoutingManager for frequency: $frequency")
         activeFrequency = frequency
         
-        // Ensure engines are ready
+        // Ensure hardware is ready
         audioEngine.startPlayback()
         
-        // Reset Mesh for new frequency - No delay, just like working APK
+        // AUTO VOLUME BOOST: If volume is 0 or very low, set to 50%
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        try {
+            val currentVolume = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
+            val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC)
+            if (currentVolume <= 1) { // 0 or 1
+                audioManager.setStreamVolume(
+                    android.media.AudioManager.STREAM_MUSIC,
+                    maxVolume / 2, // 50%
+                    android.media.AudioManager.FLAG_SHOW_UI
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not auto-set volume: ${e.message}")
+        }
+        
+        // Reset Mesh for new frequency - No delay
         meshManager.stopAll()
         meshManager.startAdvertising(frequency)
         meshManager.startDiscovery(frequency)
