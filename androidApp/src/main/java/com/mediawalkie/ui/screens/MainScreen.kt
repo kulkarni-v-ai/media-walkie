@@ -262,7 +262,7 @@ fun MainScreen(
                 // PTT Button (Big Circle) - Direct Pointer Events for INSTANT AUDIO
                 Box(
                     modifier = Modifier
-                        .sizeIn(min = 160.dp, max = 200.dp)
+                        .sizeIn(minWidth = 160.dp, minHeight = 160.dp, maxWidth = 200.dp, maxHeight = 200.dp)
                         .aspectRatio(1f)
                         .border(8.dp, if (isPressed) GoldPrimary else SurfaceCard, CircleShape)
                         .padding(8.dp)
