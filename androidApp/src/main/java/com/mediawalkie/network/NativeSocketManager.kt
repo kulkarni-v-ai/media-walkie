@@ -15,7 +15,10 @@ class NativeSocketManager(private val baseUrl: String) {
     private val _connectionState = MutableStateFlow(false)
     val connectionState = _connectionState.asStateFlow()
     
-    private val _audioFlow = MutableSharedFlow<ByteArray>()
+    private val _audioFlow = MutableSharedFlow<ByteArray>(
+        extraBufferCapacity = 64,
+        onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
+    )
     val audioFlow = _audioFlow.asSharedFlow()
     
     private val _onlineUsers = MutableStateFlow(0)

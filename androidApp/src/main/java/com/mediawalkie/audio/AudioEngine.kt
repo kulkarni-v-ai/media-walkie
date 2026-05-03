@@ -52,15 +52,32 @@ class AudioEngine(private val context: Context) {
 
         try {
             val minBufferSizeIn = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG_IN, AUDIO_FORMAT)
-            audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-                SAMPLE_RATE,
-                CHANNEL_CONFIG_IN,
-                AUDIO_FORMAT,
-                minBufferSizeIn * 2
-            )
-
-            audioRecord?.startRecording()
+            
+            // Try VOICE_COMMUNICATION first, fallback to MIC
+            val sources = listOf(MediaRecorder.AudioSource.VOICE_COMMUNICATION, MediaRecorder.AudioSource.MIC)
+            var initialized = false
+            
+            for (source in sources) {
+                try {
+                    audioRecord = AudioRecord(source, SAMPLE_RATE, CHANNEL_CONFIG_IN, AUDIO_FORMAT, minBufferSizeIn * 2)
+                    if (audioRecord?.state == AudioRecord.STATE_INITIALIZED) {
+                        audioRecord?.startRecording()
+                        Log.d(TAG, "Started capture with source: $source")
+                        initialized = true
+                        break
+                    } else {
+                        audioRecord?.release()
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to init source $source: ${e.message}")
+                }
+            }
+            
+            if (!initialized) {
+                Log.e(TAG, "COULD NOT INITIALIZE ANY AUDIO SOURCE")
+                return
+            }
+            
             isRecording = true
 
             // Enable Hardware Echo Cancellation & Noise Suppression

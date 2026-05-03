@@ -59,6 +59,7 @@ class MainActivity : ComponentActivity() {
                         val permissionsToRequest = remember {
                             mutableListOf(
                                 Manifest.permission.RECORD_AUDIO,
+                                Manifest.permission.MODIFY_AUDIO_SETTINGS,
                                 Manifest.permission.ACCESS_FINE_LOCATION,
                                 Manifest.permission.ACCESS_COARSE_LOCATION
                             ).apply {
