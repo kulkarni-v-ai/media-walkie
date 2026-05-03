@@ -174,9 +174,15 @@
                     <td><input type="text" value="${user.pin}" onblur="updatePin('${user._id}', this.value)" style="width: 80px; background: transparent; color: white; border: 1px solid #444; padding: 4px;"></td>
                     <td><span class="badge ${user.isVerified ? 'badge-verified' : 'badge-pending'}">${user.isVerified ? 'VERIFIED' : 'PENDING'}</span></td>
                     <td>
-                        <select multiple onchange="updateGroups('${user._id}', this)" style="height: 60px;">
-                            ${allGroups.map(g => `<option value="${g._id}" ${user.assignedGroups && user.assignedGroups.some(ag => (ag._id || ag) === g._id) ? 'selected' : ''}>${g.name}</option>`).join('')}
-                        </select>
+                        <div style="max-height: 80px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;">
+                            ${allGroups.map(g => `
+                                <label style="display: block; margin-bottom: 4px; cursor: pointer; font-size: 11px;">
+                                    <input type="checkbox" value="${g._id}" onchange="updateGroupsCheckbox('${user._id}')" id="checkbox-${user._id}-${g._id}"
+                                    ${user.assignedGroups && user.assignedGroups.some(ag => (ag._id || ag) === g._id) ? 'checked' : ''}>
+                                    ${g.name}
+                                </label>
+                            `).join('')}
+                        </div>
                     </td>
                     <td>
                         <button onclick="toggleVerify('${user._id}', ${!user.isVerified})">${user.isVerified ? 'UNVERIFY' : 'VERIFY'}</button>
@@ -204,13 +210,30 @@
             loadData();
         }
 
-        async function updateGroups(userId, select) {
-            const selected = Array.from(select.selectedOptions).map(opt => opt.value);
-            await fetch('/api/admin/update-user', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, assignedGroups: selected })
+        async function updateGroupsCheckbox(userId) {
+            // Find all checkboxes for this user
+            const checkboxes = document.querySelectorAll(`input[id^="checkbox-${userId}-"]`);
+            const selected = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked) selected.push(cb.value);
             });
+            
+            try {
+                const res = await fetch('/api/admin/update-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, assignedGroups: selected })
+                });
+                
+                if (res.ok) {
+                    // Optional: Visual feedback (e.g. green flash)
+                    console.log("Channels updated for", userId);
+                } else {
+                    alert("Failed to save channels");
+                }
+            } catch(e) {
+                alert("Network error while saving");
+            }
         }
 
         async function createGroup() {
