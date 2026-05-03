@@ -107,6 +107,8 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
+                        val scope = rememberCoroutineScope()
+                        
                         MainScreen(
                             routingManager = routingManager, 
                             userName = userName ?: "User", 
