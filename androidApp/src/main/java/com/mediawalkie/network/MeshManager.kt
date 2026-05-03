@@ -78,7 +78,7 @@ class MeshManager(private val context: Context) {
             connectionLifecycleCallback,
             options
         ).addOnSuccessListener {
-            Log.d("MeshManager", "Started advertising as $advertisingName on $SERVICE_ID")
+            Log.d("MeshManager", "Started advertising as Walkie-$frequency on $SERVICE_ID")
         }.addOnFailureListener {
             Log.e("MeshManager", "Failed to start advertising", it)
         }
