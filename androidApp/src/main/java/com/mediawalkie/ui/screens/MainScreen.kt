@@ -151,7 +151,7 @@ fun MainScreen(
                             .size(6.dp)
                             .clip(CircleShape)
                             .background(Color.Red)
-                            .shadow(8.dp, Color.Red)
+                            .shadow(8.dp, CircleShape, ambientColor = Color.Red, spotColor = Color.Red)
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
