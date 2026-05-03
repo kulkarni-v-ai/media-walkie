@@ -69,16 +69,23 @@ class WebRTCHandler(
         }
     }
 
-    fun startCall() {
-        ensureInitialized()
-        createPeerConnection()
+    private fun ensureLocalTrack() {
+        if (localAudioTrack != null) return
         
         val constraints = MediaConstraints()
         localAudioSource = peerConnectionFactory?.createAudioSource(constraints)
         localAudioTrack = peerConnectionFactory?.createAudioTrack("ARDAMSa0", localAudioSource)
+        localAudioTrack?.setEnabled(true)
         
         peerConnection?.addTrack(localAudioTrack)
+    }
 
+    fun startCall() {
+        ensureInitialized()
+        if (peerConnection == null) createPeerConnection()
+        ensureLocalTrack()
+
+        val constraints = MediaConstraints()
         peerConnection?.createOffer(object : SimpleSdpObserver() {
             override fun onCreateSuccess(sdp: SessionDescription) {
                 peerConnection?.setLocalDescription(SimpleSdpObserver(), sdp)
@@ -87,7 +94,7 @@ class WebRTCHandler(
                         WebRTCSignal(
                             type = "offer", 
                             sdp = sdp.description,
-                            targetId = currentPeerId // Targeted if known, else broadcast for discovery
+                            targetId = currentPeerId 
                         )
                     )
                 }
@@ -99,6 +106,9 @@ class WebRTCHandler(
         val rtcConfig = PeerConnection.RTCConfiguration(listOf(
             PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer()
         ))
+        // Enable unified plan for better multi-track support
+        rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
+        
         peerConnection = peerConnectionFactory?.createPeerConnection(rtcConfig, object : PeerConnection.Observer {
             override fun onIceCandidate(candidate: IceCandidate) {
                 scope.launch {
@@ -116,7 +126,8 @@ class WebRTCHandler(
             override fun onAddTrack(receiver: RtpReceiver, streams: Array<out MediaStream>) {
                 val track = receiver.track()
                 if (track is AudioTrack) {
-                    Log.d(TAG, "Remote Audio Track Received!")
+                    Log.d(TAG, "Remote Audio Track Received and Enabled!")
+                    track.setEnabled(true)
                     onRemoteStream(track)
                 }
             }
@@ -137,6 +148,7 @@ class WebRTCHandler(
     private fun handleOffer(signal: WebRTCSignal) {
         ensureInitialized()
         if (peerConnection == null) createPeerConnection()
+        ensureLocalTrack()
         
         peerConnection?.setRemoteDescription(object : SimpleSdpObserver() {
             override fun onSetSuccess() {

@@ -60,7 +60,8 @@ data class WebRTCSignal(
     val candidate: String? = null,
     val sdpMid: String? = null,
     val sdpMLineIndex: Int? = null,
-    val senderId: String? = null
+    val senderId: String? = null,
+    val targetId: String? = null
 )
 
 @Serializable
