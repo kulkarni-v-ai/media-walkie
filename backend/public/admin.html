@@ -124,6 +124,9 @@
                         <input type="text" id="edit-range-${g._id}" value="${g.rangeDescription || ''}" style="background:transparent; color: #888; border:none; border-bottom: 1px solid #333; width: 120px;">
                     </td>
                     <td>
+                        <input type="text" id="edit-pin-${g._id}" value="${g.pin || ''}" placeholder="PIN" style="background:transparent; color: var(--gold); border:none; border-bottom: 1px solid #333; width: 60px;">
+                    </td>
+                    <td>
                         <button onclick="updateGroup('${g._id}')">SAVE</button>
                         <button onclick="deleteGroup('${g._id}')" style="background: var(--danger); margin-left: 5px;">DEL</button>
                     </td>
@@ -135,12 +138,13 @@
         async function updateGroup(id) {
             const name = document.getElementById(`edit-name-${id}`).value;
             const frequency = document.getElementById(`edit-freq-${id}`).value;
+            const pin = document.getElementById(`edit-pin-${id}`).value;
             const rangeDescription = document.getElementById(`edit-range-${id}`).value;
 
             const res = await fetch(`/api/groups/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, frequency, rangeDescription })
+                body: JSON.stringify({ name, frequency, pin, rangeDescription })
             });
             if (res.ok) {
                 alert("Channel updated!");

@@ -150,7 +150,6 @@ class RoutingManager(private val context: Context, private val repository: Walki
         }
 
         // GLOBAL VOICE IGNITION: Keep hardware ready for voice at all times
-        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
         audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
         audioManager.isSpeakerphoneOn = true
 
