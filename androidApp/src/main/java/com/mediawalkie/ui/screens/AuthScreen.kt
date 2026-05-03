@@ -120,7 +120,14 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
                         isLoading = true
                         try {
                             val res = api.register(RegisterRequest(name, pin, "device123", "", phone))
-                            errorMsg = res.error ?: "Registration Successful! Pending Admin Verification."
+                            if (res.error == null) {
+                                errorMsg = "Success! Now use your PIN to LOGIN."
+                                name = ""
+                                phone = ""
+                                pin = ""
+                            } else {
+                                errorMsg = res.error
+                            }
                         } catch (e: Exception) {
                             errorMsg = "Network error: ${e.message}"
                         }

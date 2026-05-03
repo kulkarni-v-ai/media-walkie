@@ -138,6 +138,17 @@ fun MainScreen(
                     letterSpacing = 1.sp
                 )
             }
+            
+            // Logged In User Display
+            Spacer(Modifier.width(16.dp))
+            Text(
+                text = "|  $userName",
+                color = TextGray.copy(alpha = 0.6f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+
             Spacer(Modifier.weight(1f))
             TextButton(onClick = { 
                 routingManager?.restart(frequency, userId)
@@ -224,24 +235,6 @@ fun MainScreen(
         Divider(color = GoldPrimary.copy(alpha = 0.5f), thickness = 1.dp)
         Spacer(Modifier.height(32.dp))
 
-        // Profile / Registration Section (Minimalist Underline style)
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                ProfileField("Callsign Number", nameInput, Modifier.weight(1f)) { nameInput = it }
-                ProfileField("Phone Number", phoneInput, Modifier.weight(1f)) { phoneInput = it }
-            }
-            Spacer(Modifier.height(16.dp))
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                ProfileField("Security PIN", pinInput, Modifier.weight(1f)) { pinInput = it }
-                Spacer(Modifier.width(16.dp))
-                TextButton(
-                    onClick = { /* Login Logic */ },
-                    modifier = Modifier.background(Color.White, RoundedCornerShape(4.dp))
-                ) {
-                    Text("REGISTER / LOGIN", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
 
         Spacer(Modifier.weight(1f))
 
