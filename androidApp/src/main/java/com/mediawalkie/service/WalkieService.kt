@@ -26,7 +26,7 @@ class WalkieService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val frequency = intent?.getStringExtra("FREQUENCY") ?: "104.5"
+        val frequency = intent?.getStringExtra("FREQUENCY") ?: "NO CH"
         val userId = intent?.getStringExtra("USER_ID") ?: ""
         
         val notificationIntent = Intent(this, MainActivity::class.java)

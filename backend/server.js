@@ -227,7 +227,7 @@ io.on('connection', (socket) => {
         // Let the subsequent checks handle the 'unknown' or empty userId
 
         // Handle Offline/Anonymous Users for Public Channel
-        const freqStr = frequency ? frequency.toString() : "104.5";
+        const freqStr = frequency ? frequency.toString() : "NO CH";
         if (userId && userId.startsWith('offline_')) {
             console.log(`Anonymous/Offline join: ${userId} to ${freqStr}`);
             socket.join(freqStr);

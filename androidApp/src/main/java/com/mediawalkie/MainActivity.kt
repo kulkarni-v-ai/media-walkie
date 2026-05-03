@@ -33,6 +33,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // LINK VOLUME BUTTONS TO VOICE STREAM
+        volumeControlStream = android.media.AudioManager.STREAM_VOICE_CALL
+        
         // GLOBAL CRASH BUSTER: Catch every silent error
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             Log.e("CRASH_BUSTER", "Fatal crash on thread ${thread.name}", throwable)
@@ -87,10 +90,10 @@ class MainActivity : ComponentActivity() {
                                         Log.e("MainActivity", "CRITICAL: Location is OFF in system settings. Mesh will FAIL.")
                                     }
 
-                                    routingManager?.start("104.5", userId)
+                                    routingManager?.start("NO CH", userId)
                                     
                                     val serviceIntent = Intent(this@MainActivity, WalkieService::class.java).apply {
-                                        putExtra("FREQUENCY", "104.5")
+                                        putExtra("FREQUENCY", "NO CH")
                                         putExtra("USER_ID", userId)
                                     }
                                     

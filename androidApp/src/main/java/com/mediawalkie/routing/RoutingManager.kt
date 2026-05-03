@@ -20,7 +20,7 @@ class RoutingManager(private val context: Context, private val repository: Walki
     val meshManager by lazy { MeshManager(context) }
     private val nativeSocket by lazy { com.mediawalkie.network.NativeSocketManager("https://media-walkie-signaling.onrender.com") }
     
-    private var activeFrequency: String = "104.5"
+    private var activeFrequency: String = "NO CH"
     private var isInternetAvailable = false
     var connectedMeshPeers by mutableStateOf(0)
         private set
