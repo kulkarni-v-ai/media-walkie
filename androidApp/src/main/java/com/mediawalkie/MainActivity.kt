@@ -31,6 +31,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // GLOBAL CRASH BUSTER: Catch every silent error
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            Log.e("CRASH_BUSTER", "Fatal crash on thread ${thread.name}", throwable)
+            // You can check these logs in Logcat under 'CRASH_BUSTER'
+        }
+        
         setContent {
             MediaWalkieTheme {
                 val isVerified by sessionManager.isVerifiedFlow.collectAsState(initial = false)

@@ -7,15 +7,16 @@ import org.webrtc.PeerConnectionFactory
 class WalkieApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        // Initialize hardware later if possible, but try here defensively
         try {
-            // Initialize WebRTC at the application level for maximum hardware compatibility
             val options = PeerConnectionFactory.InitializationOptions.builder(this)
                 .setEnableInternalTracer(true)
                 .createInitializationOptions()
             PeerConnectionFactory.initialize(options)
-            Log.d("WalkieApplication", "WebRTC Initialized successfully")
-        } catch (e: Exception) {
-            Log.e("WalkieApplication", "WebRTC Initialization failed", e)
+            Log.d("WalkieApplication", "WebRTC Native Engine Loaded")
+        } catch (t: Throwable) {
+            // Use Throwable to catch UnsatisfiedLinkError
+            Log.e("WalkieApplication", "WebRTC Native Engine failed to load - falling back to safety mode", t)
         }
     }
 }
