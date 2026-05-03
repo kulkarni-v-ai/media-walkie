@@ -111,7 +111,13 @@ class MainActivity : ComponentActivity() {
                             routingManager = routingManager, 
                             userName = userName ?: "User", 
                             api = walkieApi, 
-                            userId = userId ?: ""
+                            userId = userId ?: "",
+                            onLogout = {
+                                scope.launch {
+                                    routingManager?.stop()
+                                    sessionManager.clearSession()
+                                }
+                            }
                         )
                     }
                 }

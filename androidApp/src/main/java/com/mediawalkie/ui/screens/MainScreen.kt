@@ -41,7 +41,8 @@ fun MainScreen(
     routingManager: RoutingManager? = null, 
     userName: String = "User", 
     userId: String = "",
-    api: WalkieApi? = null
+    api: WalkieApi? = null,
+    onLogout: () -> Unit = {}
 ) {
     var isPressed by remember { mutableStateOf(false) }
     var frequency by remember { mutableStateOf("104.5") }
@@ -154,6 +155,10 @@ fun MainScreen(
                 routingManager?.restart(frequency, userId)
             }) {
                 Text("RESTART", color = GoldPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(8.dp))
+            TextButton(onClick = onLogout) {
+                Text("LOGOUT", color = Color.Red.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
 
