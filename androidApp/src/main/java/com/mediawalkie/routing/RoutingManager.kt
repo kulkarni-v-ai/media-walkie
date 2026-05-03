@@ -160,8 +160,7 @@ class RoutingManager(private val context: Context, private val repository: Walki
         audioEngine.stopPlayback()
         audioEngine.stopCapture()
         meshManager.stopAll()
-        legacyWebRTCEngine.disconnect()
-        webRTCHandler?.stopCall()
+        nativeSocket.disconnect()
     }
 
     fun setPttActive(active: Boolean, name: String = "User") {
