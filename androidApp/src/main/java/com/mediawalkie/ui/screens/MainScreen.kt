@@ -34,7 +34,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.draw.drawBehind
 import com.mediawalkie.data.api.Group
 import com.mediawalkie.data.api.WalkieApi
 import com.mediawalkie.routing.RoutingManager
@@ -109,50 +108,67 @@ fun MainScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(SuccessGreen)
-                        .shadow(4.dp, CircleShape)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "ONLINE",
-                    color = TextGray,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
+                // Tactical Connection Status
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(if ((routingManager?.connectedOnlineUsers ?: 0) > 0) SuccessGreen else TextGray)
+                            .shadow(4.dp, CircleShape)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "${routingManager?.connectedOnlineUsers ?: 0} ONLINE",
+                        color = if ((routingManager?.connectedOnlineUsers ?: 0) > 0) Color.White else TextGray,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    Spacer(Modifier.width(12.dp))
+                    
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(if ((routingManager?.connectedMeshPeers ?: 0) > 0) GoldPrimary else TextGray)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "${routingManager?.connectedMeshPeers ?: 0} MESH",
+                        color = if ((routingManager?.connectedMeshPeers ?: 0) > 0) GoldPrimary else TextGray,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 
                 // Active Speaker Indicator
                 val activeSpeaker = routingManager?.currentSpeaker
                 if (activeSpeaker != null) {
-                    Spacer(Modifier.width(16.dp))
+                    Spacer(Modifier.width(12.dp))
                     Box(
                         modifier = Modifier
                             .size(6.dp)
                             .clip(CircleShape)
                             .background(Color.Red)
+                            .shadow(8.dp, Color.Red)
                     )
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(4.dp))
                     Text(
                         text = "$activeSpeaker",
                         color = GoldPrimary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.sp
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
                 
-                // Logged In User Display
-                Spacer(Modifier.width(16.dp))
+                // Callsign Display
+                Spacer(Modifier.width(12.dp))
                 Text(
                     text = "|  $userName",
-                    color = TextGray.copy(alpha = 0.6f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    color = TextGray.copy(alpha = 0.5f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium
                 )
 
                 Spacer(Modifier.weight(1f))
