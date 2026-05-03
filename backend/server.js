@@ -228,8 +228,8 @@ io.on('connection', (socket) => {
 
         // Handle Offline/Anonymous Users for Public Channel
         const freqStr = frequency ? frequency.toString() : "104.5";
-        if ((userId && userId.startsWith('offline_')) || freqStr === "104.5") {
-            console.log(`Anonymous/Public join: ${userId} to ${freqStr}`);
+        if (userId && userId.startsWith('offline_')) {
+            console.log(`Anonymous/Offline join: ${userId} to ${freqStr}`);
             socket.join(freqStr);
             socket.frequency = freqStr;
             if (!frequencyRooms[freqStr]) frequencyRooms[freqStr] = [];
@@ -248,20 +248,14 @@ io.on('connection', (socket) => {
         }
 
         if (!user) {
-            // Allow if frequency is 104.5 (redundant check but safe)
-            if (freqStr === "104.5") {
-                console.log(`Anonymous/Public join (Fallback): ${userId} to ${freqStr}`);
-            } else {
-                console.log(`Access Denied: User ${userId} not found`);
-                socket.emit('error', 'User not found or access denied.');
-                return;
-            }
+            console.log(`Access Denied: User ${userId} not found`);
+            socket.emit('error', 'User not found or access denied.');
+            return;
         }
 
         if (user && !user.isAdmin) {
             const hasAccess = user.assignedGroups.some(g => g.frequency === freqStr);
-            // ALLOW PUBLIC ACCESS TO DEFAULT FREQUENCY 104.5
-            if (!hasAccess && freqStr !== "104.5") {
+            if (!hasAccess) {
                 console.log(`Access Denied: User ${user.name} (${userId}) tried to join unauthorized frequency ${freqStr}`);
                 socket.emit('error', `You do not have permission to join channel ${freqStr}.`);
                 return;
