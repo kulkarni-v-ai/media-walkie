@@ -9,6 +9,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +25,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.drawBehind
@@ -41,6 +47,11 @@ fun MainScreen(
     var frequency by remember { mutableStateOf("104.5") }
     var groups by remember { mutableStateOf<List<Group>>(emptyList()) }
     
+    // PIN Check State
+    var showPinDialog by remember { mutableStateOf<Group?>(null) }
+    var enteredPin by remember { mutableStateOf("") }
+    var pinError by remember { mutableStateOf(false) }
+    
     // UI State for the profile fields
     var nameInput by remember { mutableStateOf(userName) }
     var pinInput by remember { mutableStateOf("") }
@@ -56,6 +67,28 @@ fun MainScreen(
                 }
             } catch (e: Exception) {}
         }
+    }
+
+    fun handleChannelSwitch(targetGroup: Group) {
+        if (!targetGroup.pin.isNullOrBlank()) {
+            showPinDialog = targetGroup
+            enteredPin = ""
+            pinError = false
+        } else {
+            frequency = targetGroup.frequency
+            routingManager?.start(frequency, userId)
+        }
+    }
+
+    fun switchChannel(offset: Int) {
+        if (groups.isEmpty()) return
+        val currentIndex = groups.indexOfFirst { it.frequency == frequency }
+        val nextIndex = (currentIndex + offset).let { 
+            if (it < 0) groups.size - 1 
+            else if (it >= groups.size) 0 
+            else it 
+        }
+        handleChannelSwitch(groups[nextIndex])
     }
 
     Column(
@@ -128,7 +161,7 @@ fun MainScreen(
 
         Spacer(Modifier.height(32.dp))
 
-        // Frequency Card (The Glow Card)
+        // Frequency Card (The Glow Card) with ARROWS
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -138,37 +171,51 @@ fun MainScreen(
                 .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "CHANNEL",
-                    color = TextGray,
-                    fontSize = 14.sp,
-                    letterSpacing = 4.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.Bottom) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { switchChannel(-1) }) {
+                    Icon(Icons.Default.KeyboardArrowLeft, "Prev", tint = GoldPrimary, modifier = Modifier.size(48.dp))
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = frequency,
-                        color = GoldPrimary,
-                        fontSize = 72.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-2).sp,
-                        style = TextStyle(
-                            shadow = androidx.compose.ui.graphics.Shadow(
-                                color = GoldGlow.copy(alpha = 0.5f),
-                                blurRadius = 30f
+                        text = "CHANNEL",
+                        color = TextGray,
+                        fontSize = 14.sp,
+                        letterSpacing = 4.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = frequency,
+                            color = GoldPrimary,
+                            fontSize = 72.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-2).sp,
+                            style = TextStyle(
+                                shadow = androidx.compose.ui.graphics.Shadow(
+                                    color = GoldGlow.copy(alpha = 0.5f),
+                                    blurRadius = 30f
+                                )
                             )
                         )
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "MHz",
-                        color = TextGray,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "MHz",
+                            color = TextGray,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+                }
+
+                IconButton(onClick = { switchChannel(1) }) {
+                    Icon(Icons.Default.KeyboardArrowRight, "Next", tint = GoldPrimary, modifier = Modifier.size(48.dp))
                 }
             }
         }
@@ -247,8 +294,7 @@ fun MainScreen(
             
             items(groups) { group ->
                 ChannelButton(group.name.take(3).uppercase()) { 
-                    frequency = group.frequency 
-                    routingManager?.start(frequency, userId)
+                    handleChannelSwitch(group)
                 }
                 Spacer(Modifier.width(12.dp))
             }
@@ -257,6 +303,56 @@ fun MainScreen(
                 ChannelButton("+") { /* Add Logic or Refresh */ }
             }
         }
+    }
+
+    // PIN Dialog
+    if (showPinDialog != null) {
+        AlertDialog(
+            onDismissRequest = { showPinDialog = null },
+            title = { Text("Channel PIN Required", color = GoldPrimary) },
+            text = {
+                Column {
+                    Text("Enter the access code for ${showPinDialog?.name}", color = Color.White)
+                    Spacer(Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = enteredPin,
+                        onValueChange = { enteredPin = it },
+                        label = { Text("PIN") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        isError = pinError,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = GoldPrimary,
+                            unfocusedBorderColor = TextGray
+                        )
+                    )
+                    if (pinError) {
+                        Text("Incorrect PIN", color = Color.Red, fontSize = 12.sp)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (enteredPin == showPinDialog?.pin) {
+                        frequency = showPinDialog!!.frequency
+                        routingManager?.start(frequency, userId)
+                        showPinDialog = null
+                    } else {
+                        pinError = true
+                    }
+                }) {
+                    Text("UNLOCK", color = GoldPrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPinDialog = null }) {
+                    Text("CANCEL", color = TextGray)
+                }
+            },
+            containerColor = SurfaceCard
+        )
     }
 }
 
@@ -296,4 +392,3 @@ fun ChannelButton(label: String, onClick: () -> Unit) {
         Text(text = label, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
-

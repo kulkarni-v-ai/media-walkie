@@ -70,6 +70,7 @@
             <div style="background: var(--surface); padding: 20px; border-radius: 12px; display: flex; gap: 10px;">
                 <input type="text" id="group-name" placeholder="Channel Name" style="flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: white;">
                 <input type="text" id="group-freq" placeholder="Freq (MHz)" style="flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: white;">
+                <input type="text" id="group-pin" placeholder="PIN (Optional)" style="width: 120px; padding: 10px; background: #222; border: 1px solid #444; color: var(--gold);">
                 <input type="text" id="group-range" placeholder="Range (e.g. 1km)" style="flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: white;">
                 <button onclick="createGroup()">CREATE</button>
             </div>
@@ -215,13 +216,14 @@
         async function createGroup() {
             const name = document.getElementById('group-name').value;
             const frequency = document.getElementById('group-freq').value;
+            const pin = document.getElementById('group-pin').value;
             const rangeDescription = document.getElementById('group-range').value;
             
             try {
                 const response = await fetch('/api/groups', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, frequency, rangeDescription })
+                    body: JSON.stringify({ name, frequency, pin, rangeDescription })
                 });
                 
                 const result = await response.json();

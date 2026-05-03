@@ -19,6 +19,7 @@ data class Group(
     val _id: String? = null,
     val name: String,
     val frequency: String,
+    val pin: String? = null,
     val rangeDescription: String? = "Standard Range"
 )
 
@@ -42,6 +43,7 @@ data class AuthResponse(
 data class GroupRequest(
     val name: String,
     val frequency: String,
+    val pin: String? = null,
     val rangeDescription: String? = null
 )
 
