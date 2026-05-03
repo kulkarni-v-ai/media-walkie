@@ -6,6 +6,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -18,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -92,213 +95,232 @@ fun MainScreen(
         handleChannelSwitch(groups[nextIndex])
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundOLED)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Top Status Bar
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(SuccessGreen)
-                    .shadow(4.dp, CircleShape)
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = "ONLINE",
-                color = TextGray,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-            
-            // Active Speaker Indicator
-            val activeSpeaker = routingManager?.currentSpeaker
-            if (activeSpeaker != null) {
-                Spacer(Modifier.width(16.dp))
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .clip(CircleShape)
-                        .background(Color.Red)
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = "$activeSpeaker",
-                    color = GoldPrimary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.sp
-                )
-            }
-            
-            // Logged In User Display
-            Spacer(Modifier.width(16.dp))
-            Text(
-                text = "|  $userName",
-                color = TextGray.copy(alpha = 0.6f),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-
-            Spacer(Modifier.weight(1f))
-            TextButton(onClick = { 
-                routingManager?.restart(frequency, userId)
-            }) {
-                Text("RESTART", color = GoldPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-            Spacer(Modifier.width(8.dp))
-            TextButton(onClick = onLogout) {
-                Text("LOGOUT", color = Color.Red.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        // App Title
-        Text(
-            text = "MEDIA WALKIE",
-            color = GoldPrimary,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 4.sp,
-            fontFamily = FontFamily.SansSerif,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(32.dp))
-
-        // Frequency Card (The Glow Card) with ARROWS
-        Box(
+    Box(modifier = Modifier.fillMaxSize().background(BackgroundOLED)) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(32.dp))
-                .background(SurfaceCard, RoundedCornerShape(32.dp))
+                .fillMaxSize()
                 .padding(24.dp),
-            contentAlignment = Alignment.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Top Status Bar (Fixed)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { switchChannel(-1) }) {
-                    Icon(Icons.Default.KeyboardArrowLeft, "Prev", tint = GoldPrimary, modifier = Modifier.size(48.dp))
-                }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "CHANNEL",
-                        color = TextGray,
-                        fontSize = 14.sp,
-                        letterSpacing = 4.sp,
-                        fontWeight = FontWeight.Medium
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(SuccessGreen)
+                        .shadow(4.dp, CircleShape)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "ONLINE",
+                    color = TextGray,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                
+                // Active Speaker Indicator
+                val activeSpeaker = routingManager?.currentSpeaker
+                if (activeSpeaker != null) {
+                    Spacer(Modifier.width(16.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(Color.Red)
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            text = frequency,
-                            color = GoldPrimary,
-                            fontSize = 72.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-2).sp,
-                            style = TextStyle(
-                                shadow = androidx.compose.ui.graphics.Shadow(
-                                    color = GoldGlow.copy(alpha = 0.5f),
-                                    blurRadius = 30f
-                                )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "$activeSpeaker",
+                        color = GoldPrimary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.sp
+                    )
+                }
+                
+                // Logged In User Display
+                Spacer(Modifier.width(16.dp))
+                Text(
+                    text = "|  $userName",
+                    color = TextGray.copy(alpha = 0.6f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = { 
+                    routingManager?.restart(frequency, userId)
+                }) {
+                    Text("RESTART", color = GoldPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.width(8.dp))
+                TextButton(onClick = onLogout) {
+                    Text("LOGOUT", color = Color.Red.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Scrollable Intel Section (Middle part)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // App Title
+                Text(
+                    text = "MEDIA WALKIE",
+                    color = GoldPrimary,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 4.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                // Frequency Card (The Glow Card) with ARROWS
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 160.dp, max = 220.dp)
+                        .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(32.dp))
+                        .background(SurfaceCard, RoundedCornerShape(32.dp))
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { switchChannel(-1) }) {
+                            Icon(Icons.Default.KeyboardArrowLeft, "Prev", tint = GoldPrimary, modifier = Modifier.size(48.dp))
+                        }
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "CHANNEL",
+                                color = TextGray,
+                                fontSize = 14.sp,
+                                letterSpacing = 4.sp,
+                                fontWeight = FontWeight.Medium
                             )
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = "MHz",
-                            color = TextGray,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
+                            Spacer(Modifier.height(8.dp))
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                Text(
+                                    text = frequency,
+                                    color = GoldPrimary,
+                                    fontSize = 64.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = (-2).sp,
+                                    style = TextStyle(
+                                        shadow = androidx.compose.ui.graphics.Shadow(
+                                            color = GoldGlow.copy(alpha = 0.5f),
+                                            blurRadius = 30f
+                                        )
+                                    )
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = "MHz",
+                                    color = TextGray,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
+                            }
+                        }
+
+                        IconButton(onClick = { switchChannel(1) }) {
+                            Icon(Icons.Default.KeyboardArrowRight, "Next", tint = GoldPrimary, modifier = Modifier.size(48.dp))
+                        }
                     }
                 }
 
-                IconButton(onClick = { switchChannel(1) }) {
-                    Icon(Icons.Default.KeyboardArrowRight, "Next", tint = GoldPrimary, modifier = Modifier.size(48.dp))
-                }
+                Spacer(Modifier.height(24.dp))
+                Divider(color = GoldPrimary.copy(alpha = 0.5f), thickness = 1.dp)
+                Spacer(Modifier.height(24.dp))
             }
-        }
 
-        Spacer(Modifier.height(32.dp))
-        Divider(color = GoldPrimary.copy(alpha = 0.5f), thickness = 1.dp)
-        Spacer(Modifier.height(32.dp))
-
-
-        Spacer(Modifier.weight(1f))
-
-        // PTT Button (Big Circle)
-        Box(
-            modifier = Modifier
-                .size(220.dp)
-                .border(8.dp, if (isPressed) GoldPrimary else SurfaceCard, CircleShape)
-                .padding(8.dp)
-                .clip(CircleShape)
-                .background(if (isPressed) GoldPrimary.copy(alpha = 0.2f) else BackgroundOLED)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onPress = {
-                            isPressed = true
-                            routingManager?.setPttActive(true, nameInput)
-                            tryAwaitRelease()
-                            isPressed = false
-                            routingManager?.setPttActive(false, nameInput)
-                        }
+            // Fixed Control Cockpit (Bottom part)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // PTT Button (Big Circle) - Direct Pointer Events for INSTANT AUDIO
+                Box(
+                    modifier = Modifier
+                        .sizeIn(min = 160.dp, max = 200.dp)
+                        .aspectRatio(1f)
+                        .border(8.dp, if (isPressed) GoldPrimary else SurfaceCard, CircleShape)
+                        .padding(8.dp)
+                        .clip(CircleShape)
+                        .background(if (isPressed) GoldPrimary.copy(alpha = 0.2f) else BackgroundOLED)
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val down = awaitFirstDown()
+                                    isPressed = true
+                                    routingManager?.setPttActive(true, userName)
+                                    
+                                    // Wait for up or cancellation
+                                    waitForUpOrCancellation()
+                                    isPressed = false
+                                    routingManager?.setPttActive(false, userName)
+                                }
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (isPressed) "TRANSMITTING..." else "HOLD TO TALK",
+                        color = if (isPressed) GoldPrimary else TextGray,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        letterSpacing = 1.sp
                     )
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "HOLD TO TALK",
-                color = if (isPressed) GoldPrimary else TextGray,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                letterSpacing = 1.sp
-            )
-        }
-
-        Spacer(Modifier.height(32.dp))
-
-        // Bottom Dynamic Channel Dock
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-            contentPadding = PaddingValues(horizontal = 12.dp)
-        ) {
-            item {
-                ChannelButton("DEF") { 
-                    frequency = "104.5" 
-                    routingManager?.start(frequency, userId)
                 }
-                Spacer(Modifier.width(12.dp))
-            }
-            
-            items(groups) { group ->
-                ChannelButton(group.name.take(3).uppercase()) { 
-                    handleChannelSwitch(group)
-                }
-                Spacer(Modifier.width(12.dp))
-            }
 
-            item {
-                ChannelButton("+") { /* Add Logic or Refresh */ }
+                Spacer(Modifier.height(24.dp))
+
+                // Bottom Dynamic Channel Dock (Fixed)
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    contentPadding = PaddingValues(horizontal = 12.dp)
+                ) {
+                    item {
+                        ChannelButton("DEF") { 
+                            frequency = "104.5" 
+                            routingManager?.start(frequency, userId)
+                        }
+                        Spacer(Modifier.width(12.dp))
+                    }
+                    
+                    items(groups) { group ->
+                        ChannelButton(group.name.take(3).uppercase()) { 
+                            handleChannelSwitch(group)
+                        }
+                        Spacer(Modifier.width(12.dp))
+                    }
+
+                    item {
+                        ChannelButton("+") { /* Add Logic or Refresh */ }
+                    }
+                }
             }
         }
     }
