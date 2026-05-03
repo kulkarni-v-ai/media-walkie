@@ -121,11 +121,11 @@ app.post('/api/admin/update-user', async (req, res) => {
 // Create a new group (Admin only)
 app.post('/api/groups', async (req, res) => {
   try {
-    const { name, frequency, rangeDescription } = req.body;
+    const { name, frequency, pin, rangeDescription } = req.body;
     if (!name || !frequency) {
       return res.status(400).json({ error: 'Group name and frequency are required' });
     }
-    const group = new Group({ name, frequency, rangeDescription });
+    const group = new Group({ name, frequency, pin, rangeDescription });
     await group.save();
     res.status(201).json({ message: 'Group created successfully', group });
   } catch (error) {
@@ -140,10 +140,10 @@ app.post('/api/groups', async (req, res) => {
 // Update a group (Admin only)
 app.put('/api/groups/:id', async (req, res) => {
   try {
-    const { name, frequency, rangeDescription } = req.body;
+    const { name, frequency, pin, rangeDescription } = req.body;
     const group = await Group.findByIdAndUpdate(
       req.params.id,
-      { name, frequency, rangeDescription },
+      { name, frequency, pin, rangeDescription },
       { new: true }
     );
     if (!group) return res.status(404).json({ error: 'Group not found' });
