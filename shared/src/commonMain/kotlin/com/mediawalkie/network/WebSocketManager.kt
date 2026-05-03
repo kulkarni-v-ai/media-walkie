@@ -30,7 +30,7 @@ class WebSocketManager(
     suspend fun sendAudioData(data: ByteArray) {
         // Socket.IO 4 format for binary: 42["audio_data", "base64_string"]
         // This is the most compatible way for Ktor to talk to Socket.IO
-        val base64 = data.toBase64()
+        val base64 = data.encodeBase64()
         val packet = "42" + json.encodeToString(listOf("audio_data", base64))
         session?.send(Frame.Text(packet))
     }
