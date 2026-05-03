@@ -8,14 +8,7 @@ import com.google.android.gms.nearby.connection.*
 class MeshManager(private val context: Context) {
 
     private val TAG = "MeshManager"
-    private val connectionsClient: ConnectionsClient? by lazy {
-        try {
-            Nearby.getConnectionsClient(context)
-        } catch (e: Exception) {
-            Log.e(TAG, "Google Play Services / Nearby Connections not available on this device", e)
-            null
-        }
-    }
+    private val connectionsClient = Nearby.getConnectionsClient(context)
     private val SERVICE_ID = "com.mediawalkie.MESH_SERVICE"
     private val STRATEGY = Strategy.P2P_CLUSTER
 
@@ -28,7 +21,7 @@ class MeshManager(private val context: Context) {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
             Log.d("MeshManager", "Connection initiated with $endpointId")
             // Auto accept for mesh
-            connectionsClient?.acceptConnection(endpointId, payloadCallback)
+            connectionsClient.acceptConnection(endpointId, payloadCallback)
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
@@ -77,10 +70,11 @@ class MeshManager(private val context: Context) {
             Log.d("MeshManager", "Endpoint found: $endpointId (${info.endpointName})...")
             
             // Only connect if they are on the same frequency
-            if (info.endpointName.startsWith("Walkie-", ignoreCase = true) && info.endpointName.contains(activeFrequency)) {
+            if (info.endpointName.startsWith("Walkie-") && info.endpointName.contains(activeFrequency)) {
                 Log.d("MeshManager", "Frequency match! Requesting connection to $endpointId")
-                connectionsClient?.requestConnection("Walkie-$activeFrequency", endpointId, connectionLifecycleCallback)
-                    ?.addOnFailureListener { Log.e("MeshManager", "Request connection failed", it) }
+                connectionsClient.requestConnection("Walkie-$activeFrequency", endpointId, connectionLifecycleCallback)
+            } else {
+                Log.d("MeshManager", "Frequency mismatch. Ignoring.")
             }
         }
 
@@ -90,11 +84,10 @@ class MeshManager(private val context: Context) {
     }
 
     fun startAdvertising(frequency: String) {
-        val client = connectionsClient ?: return
         activeFrequency = frequency
-        client.stopAdvertising()
+        connectionsClient.stopAdvertising()
         val options = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
-        client.startAdvertising(
+        connectionsClient.startAdvertising(
             "Walkie-$frequency",
             SERVICE_ID,
             connectionLifecycleCallback,
@@ -107,11 +100,10 @@ class MeshManager(private val context: Context) {
     }
 
     fun startDiscovery(frequency: String) {
-        val client = connectionsClient ?: return
         activeFrequency = frequency
-        client.stopDiscovery()
+        connectionsClient.stopDiscovery()
         val options = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
-        client.startDiscovery(
+        connectionsClient.startDiscovery(
             SERVICE_ID,
             endpointDiscoveryCallback,
             options
@@ -123,21 +115,20 @@ class MeshManager(private val context: Context) {
     }
 
     fun stopAll() {
-        connectionsClient?.stopAdvertising()
-        connectionsClient?.stopDiscovery()
-        connectionsClient?.stopAllEndpoints()
+        connectionsClient.stopAdvertising()
+        connectionsClient.stopDiscovery()
+        connectionsClient.stopAllEndpoints()
         connectedEndpoints.clear()
         onPeerCountChanged?.invoke(0)
     }
 
     fun sendAudio(payloadData: ByteArray) {
-        val client = connectionsClient ?: return
         if (connectedEndpoints.isEmpty()) {
             Log.w("MeshManager", "No peers connected. Cannot send audio.")
             return
         }
         val payload = Payload.fromBytes(payloadData)
-        client.sendPayload(connectedEndpoints.toList(), payload)
+        connectionsClient.sendPayload(connectedEndpoints.toList(), payload)
             .addOnFailureListener { Log.e("MeshManager", "Failed to send payload", it) }
     }
 }

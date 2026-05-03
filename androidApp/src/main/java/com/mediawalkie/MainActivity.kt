@@ -34,8 +34,10 @@ class MainActivity : ComponentActivity() {
         // GLOBAL CRASH BUSTER: Catch every silent error
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             Log.e("CRASH_BUSTER", "Fatal crash on thread ${thread.name}", throwable)
-            // You can check these logs in Logcat under 'CRASH_BUSTER'
         }
+
+        // Initialize early to match working APK logic
+        routingManager = RoutingManager(this, repository)
         
         setContent {
             MediaWalkieTheme {
@@ -76,10 +78,6 @@ class MainActivity : ComponentActivity() {
                         LaunchedEffect(permissionState.allPermissionsGranted, userId) {
                             if (permissionState.allPermissionsGranted && userId?.isNotEmpty() == true) {
                                 try {
-                                    if (routingManager == null) {
-                                        routingManager = RoutingManager(this@MainActivity, repository)
-                                    }
-                                    
                                     routingManager?.start("104.5", userId)
                                     
                                     val serviceIntent = Intent(this@MainActivity, WalkieService::class.java).apply {
