@@ -64,6 +64,10 @@ class MainActivity : ComponentActivity() {
                                 Manifest.permission.ACCESS_FINE_LOCATION,
                                 Manifest.permission.ACCESS_COARSE_LOCATION
                             ).apply {
+                                // Android 10+ requires background location for Nearby Connections mesh
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                                    add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                                }
                                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                                     add(Manifest.permission.BLUETOOTH_ADVERTISE)
                                     add(Manifest.permission.BLUETOOTH_CONNECT)

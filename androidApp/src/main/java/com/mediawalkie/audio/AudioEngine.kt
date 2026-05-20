@@ -18,6 +18,7 @@ class AudioEngine(private val context: Context) {
     private val processedPacketIds = mutableSetOf<String>()
     
     var userName: String = "User" // Set from MainActivity
+    var activeFrequency: String = "NO CH" // Set from RoutingManager
 
     companion object {
         private const val TAG = "AudioEngine"
@@ -25,7 +26,7 @@ class AudioEngine(private val context: Context) {
         private const val CHANNEL_CONFIG_IN = AudioFormat.CHANNEL_IN_MONO
         private const val CHANNEL_CONFIG_OUT = AudioFormat.CHANNEL_OUT_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
-        private const val HEADER_SIZE = 32 // Increased for Name
+        private const val HEADER_SIZE = 42 // Increased for Name (20) + Freq (10)
     }
 
     private var audioRecord: AudioRecord? = null
@@ -44,6 +45,7 @@ class AudioEngine(private val context: Context) {
 
     private var currentSpeaker: String? = null
     private var lastSpeakerTimestamp = 0L
+    private var receivedPacketCount = 0 // tracks only received packets for jitter pre-fetch logic
 
     @SuppressLint("MissingPermission")
     fun startCapture() {
@@ -119,7 +121,7 @@ class AudioEngine(private val context: Context) {
                         if (chunkBuffer.size() >= TARGET_CHUNK_SIZE) {
                             val audioData = chunkBuffer.toByteArray()
                             
-                            // 32-Byte Header: [ID(4)][Seq(8)][Name(20)]
+                            // 42-Byte Header: [ID(4)][Seq(8)][Name(20)][Freq(10)]
                             val packet = java.io.ByteArrayOutputStream()
                             packet.write(deviceId.toByteArray())
                             val seqBytes = java.nio.ByteBuffer.allocate(8).putLong(sequenceNumber++).array()
@@ -131,6 +133,13 @@ class AudioEngine(private val context: Context) {
                                 else it + ByteArray(20 - it.size)
                             }
                             packet.write(nameBytes)
+
+                            // Freq: Padded to 10 bytes
+                            val freqBytes = activeFrequency.toByteArray(Charsets.UTF_8).let {
+                                if (it.size > 10) it.copyOfRange(0, 10)
+                                else it + ByteArray(10 - it.size)
+                            }
+                            packet.write(freqBytes)
                             // APPLY SOFTWARE GAIN (2.0x) to boost quiet mics
                             for (i in audioData.indices step 2) {
                                 var sample = (audioData[i].toInt() and 0xFF) or (audioData[i+1].toInt() shl 8)
@@ -202,8 +211,8 @@ class AudioEngine(private val context: Context) {
                         continue
                     }
                     
-                    // Start playing only when we have a small cushion
-                    if (jitterBuffer.size < 2 && processedPacketIds.size > 5) {
+                    // Start playing only when we have a small cushion of received packets
+                    if (jitterBuffer.size < 2 && receivedPacketCount > 5) {
                         Thread.sleep(20)
                         continue
                     }
@@ -261,10 +270,18 @@ class AudioEngine(private val context: Context) {
             // 2. Self-Mute
             if (senderId == deviceId) return
 
-            // 3. Extract Name
+            // 3. Extract Name & Freq
             val senderName = String(payload.copyOfRange(12, 32), Charsets.UTF_8).trim { it <= ' ' || it == '\u0000' }
+            val packetFreq = String(payload.copyOfRange(32, 42), Charsets.UTF_8).trim { it <= ' ' || it == '\u0000' }
+
+            // 4. Frequency Filter (Mesh relies on this to not play other channels)
+            if (packetFreq != activeFrequency && packetFreq.isNotEmpty() && activeFrequency != "NO CH" && packetFreq != "NO CH") {
+                return 
+            }
+
             lastSpeakerTimestamp = System.currentTimeMillis()
             updateSpeaker(senderName)
+            receivedPacketCount++
 
             val audioData = payload.copyOfRange(HEADER_SIZE, payload.size)
             jitterBuffer.offer(audioData)

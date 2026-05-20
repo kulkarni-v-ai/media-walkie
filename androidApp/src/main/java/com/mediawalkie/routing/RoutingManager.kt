@@ -20,6 +20,8 @@ class RoutingManager(private val context: Context, private val repository: Walki
     val meshManager by lazy { MeshManager(context) }
     private val nativeSocket by lazy { com.mediawalkie.network.NativeSocketManager("https://media-walkie-signaling.onrender.com") }
     
+    private val scope = CoroutineScope(Dispatchers.Main + Job())
+
     private var activeFrequency: String = "NO CH"
     private var isInternetAvailable = false
     var connectedMeshPeers by mutableStateOf(0)
@@ -163,12 +165,15 @@ class RoutingManager(private val context: Context, private val repository: Walki
             Log.w(TAG, "Could not auto-set volume: ${e.message}")
         }
         
-        // Only reset Mesh if frequency changed
-        if (activeFrequency != frequency || connectedMeshPeers == 0) {
-            Log.d(TAG, "Frequency changed or no peers. Resetting Mesh...")
+        // Update AudioEngine frequency for packet headers
+        audioEngine.activeFrequency = frequency
+
+        // Start Mesh globally if not already connected (Frequency is now independent of Mesh)
+        if (connectedMeshPeers == 0) {
+            Log.d(TAG, "No peers. Starting global Mesh discovery...")
             meshManager.stopAll()
-            meshManager.startAdvertising(frequency)
-            meshManager.startDiscovery(frequency)
+            meshManager.startAdvertising()
+            meshManager.startDiscovery()
         }
         activeFrequency = frequency
 
@@ -176,11 +181,9 @@ class RoutingManager(private val context: Context, private val repository: Walki
         if (nativeSocket.connectionState.value == false) {
             nativeSocket.connect()
         }
-        scope.launch {
-            delay(1000) 
-            nativeSocket.joinFrequency(frequency, userId ?: "unknown")
-            Log.d(TAG, "Aggressively joined frequency: $frequency")
-        }
+        // Join frequency immediately — no delay to avoid dropping early PTT packets
+        nativeSocket.joinFrequency(frequency, userId ?: "unknown")
+        Log.d(TAG, "Joined frequency immediately: $frequency")
 
         // GLOBAL VOICE IGNITION: Keep hardware ready for voice at all times
         audioManager.mode = android.media.AudioManager.MODE_IN_COMMUNICATION
@@ -202,22 +205,20 @@ class RoutingManager(private val context: Context, private val repository: Walki
             Log.w(TAG, "Could not acquire stability locks: ${e.message}")
         }
 
-        // PERSISTENT MESH RETRY: If no peers, restart scan every 15s
+        // PERSISTENT MESH RETRY: If no peers, restart scan only (NOT stopAllEndpoints)
         scope.launch {
             while (isActive) {
                 delay(15000)
                 if (connectedMeshPeers == 0) {
-                    Log.d(TAG, "No peers found yet. Refreshing Mesh Radar for $activeFrequency...")
-                    meshManager.stopAll()
-                    meshManager.startAdvertising(activeFrequency)
-                    delay(2000)
-                    meshManager.startDiscovery(activeFrequency)
+                    Log.d(TAG, "No peers found yet. Refreshing Mesh scan only (keeping connections alive)...")
+                    // restartScanOnly stops/restarts advertising+discovery WITHOUT disconnecting peers
+                    meshManager.restartScanOnly()
                 }
             }
         }
     }
 
-    private val scope = CoroutineScope(Dispatchers.Main + Job())
+    // scope is now declared at the top of the class to prevent UninitializedPropertyAccessException
 
     private fun checkInternet() {
         try {

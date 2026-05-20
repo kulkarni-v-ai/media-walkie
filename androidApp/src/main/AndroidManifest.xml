@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Required for Nearby Connections mesh on Android 10+ -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <!-- Android 12+ Bluetooth Permissions -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
@@ -16,7 +18,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     
     <!-- Android 13+ Wi-Fi Permissions -->
-    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
 
     <!-- Audio Recording and Internet (WebRTC) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -27,6 +29,7 @@
     <!-- Foreground Service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
@@ -54,7 +57,7 @@
         <service
             android:name=".service.WalkieService"
             android:exported="false"
-            android:foregroundServiceType="microphone" />
+            android:foregroundServiceType="microphone|connectedDevice" />
     </application>
 
 </manifest>

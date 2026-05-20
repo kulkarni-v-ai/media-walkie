@@ -65,9 +65,27 @@ class NativeSocketManager(private val baseUrl: String) {
 
             socket?.on("audio_data") { args ->
                 try {
-                    // Native Socket.IO handles binary automatically as ByteArray
-                    val data = args[0] as ByteArray
-                    _audioFlow.tryEmit(data)
+                    // Socket.IO may deliver binary as ByteArray, JSONArray, or other types
+                    // depending on library version and server encoding. Handle all cases.
+                    val data: ByteArray? = when (val raw = args[0]) {
+                        is ByteArray -> raw
+                        is org.json.JSONArray -> {
+                            ByteArray(raw.length()) { i -> raw.getInt(i).toByte() }
+                        }
+                        is Array<*> -> {
+                            // Socket.IO sometimes wraps in Object[]
+                            val first = raw.firstOrNull()
+                            if (first is ByteArray) first
+                            else null
+                        }
+                        else -> {
+                            Log.w("NativeSocket", "Unknown audio_data type: ${raw?.javaClass?.name}")
+                            null
+                        }
+                    }
+                    if (data != null) {
+                        _audioFlow.tryEmit(data)
+                    }
                 } catch (e: Exception) {
                     Log.e("NativeSocket", "Error receiving audio: ${e.message}")
                 }
