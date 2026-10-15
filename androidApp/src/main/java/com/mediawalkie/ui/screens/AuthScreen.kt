@@ -176,6 +176,7 @@ fun AuthScreen(sessionManager: SessionManager, api: WalkieApi, onVerified: () ->
             onClick = {
                 scope.launch {
                     sessionManager.saveSession("Offline User", true)
+                    sessionManager.saveUserId("offline_" + java.util.UUID.randomUUID().toString().substring(0, 8))
                     onVerified()
                 }
             }

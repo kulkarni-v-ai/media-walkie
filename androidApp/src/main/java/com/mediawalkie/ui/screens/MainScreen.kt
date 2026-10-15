@@ -363,14 +363,6 @@ fun MainScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     contentPadding = PaddingValues(horizontal = 12.dp)
                 ) {
-                    item {
-                        ChannelButton("DEF") { 
-                            frequency = "104.5" 
-                            routingManager?.start(frequency, userId)
-                        }
-                        Spacer(Modifier.width(12.dp))
-                    }
-                    
                     items(groups) { group ->
                         ChannelButton(group.name.take(3).uppercase()) { 
                             handleChannelSwitch(group)

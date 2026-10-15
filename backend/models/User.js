@@ -1,15 +1,9 @@
-const mongoose = require('mongoose');
+const db = require('../db');
 
-const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  pin: { type: String, required: true },
-  email: { type: String },
-  phone: { type: String },
-  deviceId: { type: String },
-  isVerified: { type: Boolean, default: false },
-  isAdmin: { type: Boolean, default: false },
-  assignedGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }],
-  createdAt: { type: Date, default: Date.now }
-});
-
-module.exports = mongoose.model('User', UserSchema);
+module.exports = {
+  create: db.createUser,
+  findById: db.findUserById,
+  findOne: ({ name, pin }) => db.findUserByNameAndPin(name, pin),
+  find: db.getAllUsers,
+  update: db.updateUser
+};

@@ -1,3 +1,9 @@
+databases:
+  - name: media-walkie-db
+    databaseName: mediawalkie
+    user: mediawalkie
+    plan: free
+
 services:
   - type: web
     name: media-walkie-signaling
@@ -11,3 +17,7 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: media-walkie-db
+          property: connectionString
